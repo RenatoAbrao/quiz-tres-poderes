@@ -1,678 +1,1193 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#f7f4ee">
-<meta name="description" content="Quiz de 15 perguntas sobre o Legislativo, o Executivo e o Judiciário, com base na Constituição Federal de 1988.">
-<title>Quiz dos Três Poderes</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
-<style>
-/* Layout: white rounded panels floating on a cream-to-sky wash (Brasília morning light), ink-black pills for primary actions, grey outlines for secondary.
-   Deliberately single light theme (white / cream / grey), as requested. */
-:root {
-  --cream: #f7f4ee;
-  --sky-wash: #dde7f2;
-  --surface: #ffffff;
-  --soft: #f5f5f3;
-  --ink: #141414;
-  --text: #2a2a2a;
-  --muted: #7a7a7a;
-  --line: #e3e3e0;
-  --line-strong: #cfcfcb;
-  --ok: #2f7d55;     --ok-bg: #eaf5ee;
-  --bad: #b5463f;    --bad-bg: #fbeceb;
-  --leg-bg: #e9f1ec; --leg-fg: #3b6b52;
-  --exe-bg: #f5efe1; --exe-fg: #7b6224;
-  --jud-bg: #e8edf6; --jud-fg: #3a5584;
-  --ger-bg: #efeaf6; --ger-fg: #5d4b86;
-  --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
-  --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
-  --shadow: 0 1px 2px rgba(20,20,20,.04), 0 8px 28px rgba(40,60,90,.07);
-  --shadow-up: 0 2px 4px rgba(20,20,20,.05), 0 16px 40px rgba(40,60,90,.12);
-  --ease: cubic-bezier(.2,.8,.2,1);
-  color-scheme: light;
-}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="claude:viewport-fit-sides" content="cover">
+  <title>Quiz dos Três Poderes</title>
 
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-[hidden] { display: none !important; }
-img, svg { max-width: 100%; }
-html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
-body {
-  margin: 0;
-  background: linear-gradient(180deg, var(--cream) 0%, var(--sky-wash) 55%, var(--cream) 100%) fixed, var(--cream);
-  color: var(--text);
-  font-family: var(--font-body);
-  font-size: 1rem;
-  line-height: 1.6;
-  min-height: 100vh;
-}
-body::before {
-  content: ""; position: fixed; inset: 0 0 auto;
-  height: env(safe-area-inset-top, 0px); z-index: 20; background: var(--cream);
-}
-.wrap {
-  max-width: 1100px; margin: 0 auto;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
-}
-h1, h2, h3 { font-family: var(--font-display); color: var(--ink); line-height: 1.12; text-wrap: balance; margin: 0; letter-spacing: -.005em; }
-p { margin: 0; }
-.eyebrow { font-size: .75rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  <!-- Fontes -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
 
-/* ---------- Buttons ---------- */
-.btn {
-  position: relative; overflow: hidden; isolation: isolate;
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  font: inherit; font-weight: 600; font-size: .92rem; text-decoration: none; cursor: pointer;
-  border-radius: 10px; padding: 10px 16px;
-  background: var(--surface); color: var(--text); border: 1px solid var(--line-strong);
-  transition: transform .18s var(--ease), box-shadow .18s var(--ease), background .18s, border-color .18s;
-}
-.btn:hover { border-color: var(--ink); box-shadow: 0 4px 14px rgba(20,20,20,.08); transform: translateY(-1px); }
-.btn:active { transform: scale(.96); }
-.btn-dark { background: var(--ink); color: #fff; border-color: var(--ink); border-radius: 999px; padding: 12px 24px; }
-.btn-dark:hover { background: #2b2b2b; box-shadow: 0 8px 22px rgba(20,20,20,.22); }
-.btn:focus-visible, a:focus-visible, .alt:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
-.ripple {
-  position: absolute; border-radius: 50%; pointer-events: none; z-index: -1;
-  background: currentColor; opacity: .18; transform: scale(0);
-  animation: ripple .6s var(--ease) forwards;
-}
-@keyframes ripple { to { transform: scale(1); opacity: 0; } }
+  <style>
+    /* =========================================================
+       1. VARIÁVEIS (cores, fontes, sombras)
+       ========================================================= */
+    :root {
+      --cream: #f7f4ee;
+      --sky-wash: #dde7f2;
+      --surface: #ffffff;
+      --soft: #f5f5f3;
+      --ink: #141414;
+      --text: #2a2a2a;
+      --muted: #7a7a7a;
+      --line: #e3e3e0;
+      --line-strong: #cfcfcb;
 
-/* ---------- Header ---------- */
-.topo {
-  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 15;
-  background: rgba(247,244,238,.78); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(207,207,203,.6);
-}
-.topo .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 12px; }
-.marca { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 800; font-size: 1.15rem; color: var(--ink); text-decoration: none; }
-.marca svg { width: 28px; height: 20px; }
-.topo nav { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-.topo nav a.link { color: var(--text); text-decoration: none; font-weight: 500; font-size: .9rem; padding: 8px 12px; border-radius: 999px; transition: background .18s; }
-.topo nav a.link:hover { background: rgba(20,20,20,.06); }
+      --ok: #2f7d55;     --ok-bg: #eaf5ee;
+      --bad: #b5463f;    --bad-bg: #fbeceb;
+      --leg-bg: #e9f1ec; --leg-fg: #3b6b52;
+      --exe-bg: #f5efe1; --exe-fg: #7b6224;
+      --jud-bg: #e8edf6; --jud-fg: #3a5584;
+      --ger-bg: #efeaf6; --ger-fg: #5d4b86;
 
-/* ---------- Panels ---------- */
-main { display: grid; gap: 22px; padding-block: 28px 48px; }
-.painel {
-  background: var(--surface); border-radius: 22px; box-shadow: var(--shadow);
-  animation: subir .7s var(--ease) both;
-}
-.painel:nth-child(2) { animation-delay: .08s; }
-.painel:nth-child(3) { animation-delay: .16s; }
-@keyframes subir { from { transform: translateY(14px); } to { transform: none; } }
+      --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
+      --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
 
-/* ---------- Hero ---------- */
-.hero { display: grid; grid-template-columns: 1.1fr 1fr; overflow: hidden; }
-.hero-texto { padding: 48px 44px; display: grid; gap: 18px; align-content: center; min-width: 0; }
-.hero h1 { font-size: clamp(2.1rem, 4.8vw, 3.5rem); font-weight: 800; }
-.hero h1 i { font-style: italic; font-weight: 700; }
-.hero .lead { color: var(--muted); font-size: 1.08rem; max-width: 44ch; }
-.hero .acoes { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
-.hero-arte {
-  position: relative; min-height: 300px; min-width: 0;
-  background: linear-gradient(180deg, #eef3f8 0%, var(--cream) 100%);
-  border-left: 1px solid var(--line);
-  display: grid; place-items: end center; overflow: hidden;
-}
-.sol {
-  position: absolute; width: 120px; height: 120px; border-radius: 50%; top: 38px; right: 54px;
-  background: radial-gradient(circle, #fff 0%, #fff6e3 55%, rgba(255,246,227,0) 72%);
-  animation: brilho 6s ease-in-out infinite alternate;
-}
-@keyframes brilho { to { transform: translateY(8px) scale(1.06); } }
-.congresso { position: relative; width: 92%; max-width: 440px; display: block; color: var(--ink); }
-.congresso .traco { fill: none; stroke: currentColor; stroke-width: 2.2; stroke-dasharray: 900; stroke-dashoffset: 0; animation: desenhar 1.6s var(--ease) both; }
-.congresso .massa { fill: currentColor; }
-@keyframes desenhar { from { stroke-dashoffset: 900; } to { stroke-dashoffset: 0; } }
-.hero-arte .legenda { position: absolute; left: 20px; bottom: 14px; font-size: .75rem; color: var(--muted); }
+      --shadow: 0 1px 2px rgba(20,20,20,.04), 0 8px 28px rgba(40,60,90,.07);
+      --shadow-up: 0 2px 4px rgba(20,20,20,.05), 0 16px 40px rgba(40,60,90,.12);
+      --ease: cubic-bezier(.2,.8,.2,1);
 
-/* ---------- Art. 2º ---------- */
-.artigo { padding: 36px 44px; display: grid; grid-template-columns: 170px 1fr; gap: 28px; }
-.artigo .ref { display: grid; gap: 6px; align-content: start; padding-top: 6px; }
-.artigo .ref b { font-family: var(--font-display); font-size: 2.6rem; color: var(--ink); line-height: 1; }
-.artigo blockquote { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: clamp(1.25rem, 2.4vw, 1.75rem); line-height: 1.4; color: var(--ink); max-width: 36ch; }
-.artigo .nota { color: var(--muted); margin-top: 14px; max-width: 64ch; }
+      color-scheme: light;
+    }
 
-/* ---------- Powers ---------- */
-.poderes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-.poder {
-  background: var(--surface); border-radius: 20px; box-shadow: var(--shadow);
-  padding: 26px; display: grid; gap: 10px; align-content: start; min-width: 0;
-  transition: transform .25s var(--ease), box-shadow .25s var(--ease);
-  animation: subir .7s var(--ease) both;
-}
-.poder:nth-child(2) { animation-delay: .1s; } .poder:nth-child(3) { animation-delay: .2s; }
-.poder:hover { transform: translateY(-4px); box-shadow: var(--shadow-up); }
-.poder .icone { width: 52px; height: 52px; border-radius: 14px; background: var(--soft); display: grid; place-items: center; color: var(--ink); transition: transform .3s var(--ease); }
-.poder:hover .icone { transform: rotate(-6deg) scale(1.06); }
-.poder .icone svg { width: 34px; height: 22px; }
-.poder h3 { font-size: 1.45rem; margin-top: 6px; }
-.poder .orgao { font-size: .85rem; color: var(--muted); }
-.poder .desc { color: var(--text); font-size: .95rem; }
+    /* =========================================================
+       2. BASE
+       ========================================================= */
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    [hidden] { display: none !important; }
+    img, svg { max-width: 100%; }
+    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 
-/* ---------- Chips ---------- */
-.chip { display: inline-flex; align-items: center; gap: 6px; font-size: .75rem; font-weight: 600; padding: 3px 10px; border-radius: 6px; white-space: nowrap; }
-.chip.leg { background: var(--leg-bg); color: var(--leg-fg); }
-.chip.exe { background: var(--exe-bg); color: var(--exe-fg); }
-.chip.jud { background: var(--jud-bg); color: var(--jud-fg); }
-.chip.ger { background: var(--ger-bg); color: var(--ger-fg); }
-.chip.status { background: var(--soft); color: var(--text); border-radius: 999px; padding: 5px 12px; font-size: .82rem; font-weight: 500; }
-.chip.status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, var(--cream) 0%, var(--sky-wash) 55%, var(--cream) 100%) fixed, var(--cream);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+    body::before {
+      content: "";
+      position: fixed; inset: 0 0 auto; z-index: 20;
+      height: env(safe-area-inset-top, 0px);
+      background: var(--cream);
+    }
+    body.travado { overflow: hidden; }
 
-/* ---------- Quiz ---------- */
-.quiz { overflow: hidden; scroll-margin-top: 80px; }
-.quiz-topo { padding: 26px 30px 20px; display: flex; gap: 16px; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; }
-.quiz-titulo { display: flex; gap: 14px; align-items: flex-start; min-width: 0; }
-.num {
-  flex: none; width: 34px; height: 34px; border-radius: 8px; background: var(--ink); color: #fff;
-  display: grid; place-items: center; font-weight: 700; font-size: .95rem; font-variant-numeric: tabular-nums;
-  margin-top: 2px;
-}
-.num.pop { animation: pop .35s var(--ease); }
-@keyframes pop { 50% { transform: scale(1.18); } }
-.quiz-titulo h2 { font-size: clamp(1.35rem, 2.6vw, 1.7rem); }
-.quiz-titulo .sub { color: var(--muted); font-size: .88rem; margin-top: 4px; }
-.progresso { display: flex; align-items: center; gap: 12px; color: var(--text); font-size: .88rem; font-variant-numeric: tabular-nums; }
-.progresso .barra { width: 110px; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
-.progresso .barra i { display: block; height: 100%; width: 0; background: var(--ink); border-radius: 3px; transition: width .5s var(--ease); }
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding-left: max(16px, env(safe-area-inset-left, 0px));
+      padding-right: max(16px, env(safe-area-inset-right, 0px));
+    }
 
-.quiz-corpo { border-top: 1px solid var(--line); padding: 26px 30px 30px; }
-.cena { animation: entrar .45s var(--ease) both; }
-@keyframes entrar { from { opacity: .001; transform: translateX(18px); } to { opacity: 1; transform: none; } }
+    h1, h2, h3 {
+      margin: 0;
+      font-family: var(--font-display);
+      color: var(--ink);
+      line-height: 1.12;
+      letter-spacing: -.005em;
+      text-wrap: balance;
+    }
+    p { margin: 0; }
 
-.inicio { display: grid; gap: 18px; }
-.inicio p { color: var(--muted); max-width: 60ch; }
-.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .eyebrow {
+      font-size: .75rem; font-weight: 600;
+      letter-spacing: .08em; text-transform: uppercase;
+      color: var(--muted);
+    }
 
-.pergunta-linha { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
-.pergunta { font-family: var(--font-display); font-weight: 700; color: var(--ink); font-size: clamp(1.2rem, 2.4vw, 1.55rem); line-height: 1.3; margin: 6px 0 20px; text-wrap: balance; }
+    /* =========================================================
+       3. BOTÕES
+       ========================================================= */
+    .btn {
+      position: relative; overflow: hidden; isolation: isolate;
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 10px 16px;
+      border: 1px solid var(--line-strong); border-radius: 10px;
+      background: var(--surface); color: var(--text);
+      font: inherit; font-weight: 600; font-size: .92rem;
+      text-decoration: none; cursor: pointer;
+      transition: transform .18s var(--ease), box-shadow .18s var(--ease), background .18s, border-color .18s;
+    }
+    .btn:hover { border-color: var(--ink); box-shadow: 0 4px 14px rgba(20,20,20,.08); transform: translateY(-1px); }
+    .btn:active { transform: scale(.96); }
 
-.alternativas { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.alt {
-  position: relative; overflow: hidden; isolation: isolate;
-  display: grid; grid-template-columns: 30px 1fr; gap: 12px; align-items: center;
-  width: 100%; text-align: left; font: inherit; font-size: .95rem; color: var(--text);
-  background: var(--surface); border: 1px solid var(--line-strong); border-radius: 12px;
-  padding: 12px 14px; cursor: pointer;
-  transition: transform .18s var(--ease), border-color .18s, background .2s, box-shadow .18s;
-  animation: entrar .4s var(--ease) both;
-}
-.alt:nth-child(2) { animation-delay: .05s; } .alt:nth-child(3) { animation-delay: .1s; } .alt:nth-child(4) { animation-delay: .15s; }
-.alt .letra {
-  width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center;
-  background: var(--soft); color: var(--muted); font-weight: 700; font-size: .82rem;
-  transition: background .2s, color .2s, transform .25s var(--ease);
-}
-.alt:hover:not(:disabled) { border-color: var(--ink); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(20,20,20,.07); }
-.alt:hover:not(:disabled) .letra { background: var(--ink); color: #fff; }
-.alt:active:not(:disabled) { transform: scale(.97); }
-.alt:disabled { cursor: default; }
-.alt.apagada { opacity: .45; }
-.alt.certa { border-color: var(--ok); background: var(--ok-bg); opacity: 1; animation: acerto .5s var(--ease); }
-.alt.certa .letra { background: var(--ok); color: #fff; transform: scale(1.08); }
-.alt.errada { border-color: var(--bad); background: var(--bad-bg); opacity: 1; animation: tremer .45s ease; }
-.alt.errada .letra { background: var(--bad); color: #fff; }
-@keyframes acerto { 40% { transform: scale(1.03); } 100% { transform: none; } }
-@keyframes tremer { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+    .btn-dark { background: var(--ink); color: #fff; border-color: var(--ink); border-radius: 999px; padding: 12px 24px; }
+    .btn-dark:hover { background: #2b2b2b; box-shadow: 0 8px 22px rgba(20,20,20,.22); }
 
-.feedback {
-  margin-top: 18px; padding: 14px 16px; border-radius: 12px; background: var(--soft); border: 1px solid var(--line);
-  display: grid; gap: 4px; animation: abrir .4s var(--ease) both;
-}
-@keyframes abrir { from { opacity: .001; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
-.feedback .fonte { font-size: .8rem; color: var(--muted); }
-.feedback strong.ok { color: var(--ok); } .feedback strong.bad { color: var(--bad); }
+    .btn:focus-visible, a:focus-visible, .alt:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 
-.rodape-quiz { margin-top: 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
-.toggle { display: inline-flex; align-items: center; gap: 10px; color: var(--muted); font-size: .85rem; cursor: pointer; user-select: none; }
-.toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-.toggle .trilho { width: 38px; height: 22px; border-radius: 999px; background: var(--line-strong); position: relative; transition: background .2s; }
-.toggle .trilho::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: transform .25s var(--ease); }
-.toggle input:checked + .trilho { background: var(--ink); }
-.toggle input:checked + .trilho::after { transform: translateX(16px); }
-.toggle input:focus-visible + .trilho { outline: 2px solid var(--ink); outline-offset: 2px; }
+    .ripple {
+      position: absolute; z-index: -1;
+      border-radius: 50%; pointer-events: none;
+      background: currentColor; opacity: .18; transform: scale(0);
+      animation: ripple .6s var(--ease) forwards;
+    }
+    @keyframes ripple { to { transform: scale(1); opacity: 0; } }
 
-.resultado { display: grid; gap: 20px; }
-.placar { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-.placar b { font-family: var(--font-display); font-size: clamp(3.4rem, 9vw, 5rem); color: var(--ink); line-height: 1; font-variant-numeric: tabular-nums; }
-.placar span { color: var(--muted); font-size: 1.1rem; }
-.veredito { font-family: var(--font-display); font-size: 1.3rem; font-weight: 600; color: var(--ink); max-width: 46ch; }
-.por-poder { display: grid; gap: 12px; max-width: 520px; }
-.linha { display: grid; grid-template-columns: 112px 1fr 44px; gap: 12px; align-items: center; font-size: .92rem; }
-.linha .barra { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
-.linha .barra i { display: block; height: 100%; width: 0; background: var(--ink); border-radius: 4px; transition: width .9s var(--ease); }
-.linha .n { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
-.acoes-fim { display: flex; gap: 10px; flex-wrap: wrap; }
+    /* =========================================================
+       4. CABEÇALHO
+       ========================================================= */
+    .topo {
+      position: sticky; top: env(safe-area-inset-top, 0px); z-index: 15;
+      background: rgba(247,244,238,.78);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(207,207,203,.6);
+    }
+    .topo .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 12px; }
 
-/* ---------- Footer ---------- */
-.rodape { padding-block: 8px 36px; color: var(--muted); font-size: .85rem; }
-.rodape .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .marca {
+      display: flex; align-items: center; gap: 10px;
+      font-family: var(--font-display); font-weight: 800; font-size: 1.15rem;
+      color: var(--ink); text-decoration: none;
+    }
+    .marca svg { width: 28px; height: 20px; }
 
-/* ---------- Responsive ---------- */
-@media (max-width: 860px) {
-  .hero { grid-template-columns: 1fr; }
-  .hero-texto { padding: 32px 24px 8px; }
-  .hero-arte { border-left: 0; min-height: 220px; background: linear-gradient(180deg, var(--surface) 0%, #eef3f8 100%); }
-  .artigo { grid-template-columns: 1fr; padding: 28px 24px; gap: 12px; }
-  .artigo .ref { grid-auto-flow: column; justify-content: start; align-items: baseline; gap: 12px; }
-  .poderes { grid-template-columns: 1fr; }
-  .alternativas { grid-template-columns: 1fr; }
-}
-@media (max-width: 520px) {
-  body { font-size: .98rem; }
-  .topo .wrap { padding-block: 10px; }
-  .topo nav a.link { display: none; }
-  .topo nav .btn-dark { padding: 9px 16px; font-size: .85rem; }
-  .marca { font-size: 1.05rem; }
+    .topo nav { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    .topo nav a.link {
+      padding: 8px 12px; border-radius: 999px;
+      color: var(--text); text-decoration: none; font-weight: 500; font-size: .9rem;
+      transition: background .18s;
+    }
+    .topo nav a.link:hover { background: rgba(20,20,20,.06); }
 
-  main { gap: 14px; padding-block: 14px 28px; }
-  .painel { border-radius: 18px; }
+    /* =========================================================
+       5. PAINÉIS
+       ========================================================= */
+    main { display: grid; gap: 22px; padding-block: 28px 48px; }
 
-  .hero-texto { padding: 26px 20px 6px; gap: 14px; }
-  .hero h1 { font-size: 2rem; }
-  .hero .lead { font-size: 1rem; }
-  .hero .acoes { display: grid; grid-template-columns: 1fr; gap: 8px; }
-  .hero .acoes .btn { width: 100%; padding-block: 14px; }
-  .hero-arte { min-height: 170px; }
-  .sol { width: 80px; height: 80px; top: 16px; right: 24px; }
-  .hero-arte .legenda { left: 14px; bottom: 8px; font-size: .7rem; }
+    .painel {
+      background: var(--surface);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      animation: subir .7s var(--ease) both;
+    }
+    .painel:nth-child(2) { animation-delay: .08s; }
+    .painel:nth-child(3) { animation-delay: .16s; }
+    @keyframes subir { from { transform: translateY(14px); } to { transform: none; } }
 
-  .artigo { padding: 22px 20px; }
-  .artigo .ref b { font-size: 2rem; }
-  .artigo blockquote { font-size: 1.2rem; }
+    /* =========================================================
+       6. HERO
+       ========================================================= */
+    .hero { display: grid; grid-template-columns: 1.1fr 1fr; overflow: hidden; }
+    .hero-texto { padding: 48px 44px; display: grid; gap: 18px; align-content: center; min-width: 0; }
+    .hero h1 { font-size: clamp(2.1rem, 4.8vw, 3.5rem); font-weight: 800; }
+    .hero h1 i { font-style: italic; font-weight: 700; }
+    .hero .lead { color: var(--muted); font-size: 1.08rem; max-width: 44ch; }
+    .hero .acoes { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
 
-  .poderes { gap: 12px; }
-  .poder { padding: 20px; border-radius: 18px; grid-template-columns: 52px 1fr; column-gap: 14px; }
-  .poder .icone { grid-row: span 2; }
-  .poder .chip { align-self: end; }
-  .poder h3 { font-size: 1.2rem; margin-top: 0; }
-  .poder .orgao, .poder .desc { grid-column: 1 / -1; }
+    .hero-arte {
+      position: relative; overflow: hidden;
+      min-height: 300px; min-width: 0;
+      display: grid; place-items: end center;
+      background: linear-gradient(180deg, #eef3f8 0%, var(--cream) 100%);
+      border-left: 1px solid var(--line);
+    }
+    .sol {
+      position: absolute; top: 38px; right: 54px;
+      width: 120px; height: 120px; border-radius: 50%;
+      background: radial-gradient(circle, #fff 0%, #fff6e3 55%, rgba(255,246,227,0) 72%);
+      animation: brilho 6s ease-in-out infinite alternate;
+    }
+    @keyframes brilho { to { transform: translateY(8px) scale(1.06); } }
 
-  .quiz { scroll-margin-top: 64px; }
-  .quiz-topo { padding: 20px 18px 14px; gap: 14px; }
-  .quiz-titulo { flex: 1 1 100%; }
-  .progresso { flex: 1 1 100%; }
-  .progresso .barra { flex: 1; width: auto; }
-  .quiz-corpo { padding: 18px 18px 0; }
-  .pergunta { font-size: 1.22rem; margin: 4px 0 16px; }
-  .alt { padding: 14px; min-height: 58px; font-size: 1rem; border-radius: 14px; }
-  .alt .letra { width: 32px; height: 32px; }
-  .feedback { font-size: .95rem; }
+    .congresso { position: relative; display: block; width: 92%; max-width: 440px; color: var(--ink); }
+    .congresso .traco {
+      fill: none; stroke: currentColor; stroke-width: 2.2;
+      stroke-dasharray: 900; stroke-dashoffset: 0;
+      animation: desenhar 1.6s var(--ease) both;
+    }
+    .congresso .massa { fill: currentColor; }
+    @keyframes desenhar { from { stroke-dashoffset: 900; } to { stroke-dashoffset: 0; } }
 
-  /* thumb-reach action bar */
-  .rodape-quiz {
-    position: sticky; bottom: 0; z-index: 5;
-    margin: 16px -18px 0; padding: 12px 18px calc(12px + env(safe-area-inset-bottom, 0px));
-    background: rgba(255,255,255,.94); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-    border-top: 1px solid var(--line);
-  }
-  .rodape-quiz .btn-dark { flex: 1 1 160px; padding-block: 14px; }
-  .inicio, .resultado { padding-bottom: 22px; }
-  .inicio .btn-dark, .acoes-fim .btn { width: 100%; padding-block: 14px; }
-  .acoes-fim { display: grid; grid-template-columns: 1fr; gap: 8px; }
+    .hero-arte .legenda { position: absolute; left: 20px; bottom: 14px; font-size: .75rem; color: var(--muted); }
 
-  .placar b { font-size: 3.6rem; }
-  .linha { grid-template-columns: 96px 1fr 40px; }
-  .rodape .wrap { justify-content: center; text-align: center; }
-}
-/* Touch screens: no sticky hover states */
-@media (hover: none) {
-  .btn:hover, .poder:hover { transform: none; box-shadow: var(--shadow); }
-  .btn:hover:not(.btn-dark) { border-color: var(--line-strong); box-shadow: none; }
-  .btn-dark:hover { background: var(--ink); box-shadow: none; }
-  .alt:hover:not(:disabled) { transform: none; border-color: var(--line-strong); box-shadow: none; background: var(--surface); }
-  .alt:hover:not(:disabled) .letra { background: var(--soft); color: var(--muted); }
-  .poder:hover .icone { transform: none; }
-  .alt:active:not(:disabled) { transform: scale(.97); background: var(--soft); }
-}
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  *, *::before, *::after { animation: none !important; transition: none !important; }
-}
-</style>
+    /* =========================================================
+       7. ARTIGO 2º
+       ========================================================= */
+    .artigo { padding: 36px 44px; display: grid; grid-template-columns: 170px 1fr; gap: 28px; }
+    .artigo .ref { display: grid; gap: 6px; align-content: start; padding-top: 6px; }
+    .artigo .ref b { font-family: var(--font-display); font-size: 2.6rem; color: var(--ink); line-height: 1; }
+    .artigo blockquote {
+      margin: 0; max-width: 36ch;
+      font-family: var(--font-display); font-weight: 600;
+      font-size: clamp(1.25rem, 2.4vw, 1.75rem); line-height: 1.4;
+      color: var(--ink);
+    }
+    .artigo .nota { color: var(--muted); margin-top: 14px; max-width: 64ch; }
+
+    /* =========================================================
+       8. CARDS DOS PODERES
+       ========================================================= */
+    .poderes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+
+    .poder {
+      display: grid; gap: 10px; align-content: start; min-width: 0;
+      padding: 26px;
+      background: var(--surface); border-radius: 20px; box-shadow: var(--shadow);
+      transition: transform .25s var(--ease), box-shadow .25s var(--ease);
+      animation: subir .7s var(--ease) both;
+    }
+    .poder:nth-child(2) { animation-delay: .1s; }
+    .poder:nth-child(3) { animation-delay: .2s; }
+    .poder:hover { transform: translateY(-4px); box-shadow: var(--shadow-up); }
+
+    .poder .icone {
+      width: 52px; height: 52px; border-radius: 14px;
+      display: grid; place-items: center;
+      background: var(--soft); color: var(--ink);
+      transition: transform .3s var(--ease);
+    }
+    .poder:hover .icone { transform: rotate(-6deg) scale(1.06); }
+    .poder .icone svg { width: 34px; height: 22px; }
+    .poder h3 { font-size: 1.45rem; margin-top: 6px; }
+    .poder .orgao { font-size: .85rem; color: var(--muted); }
+    .poder .desc { color: var(--text); font-size: .95rem; }
+
+    /* =========================================================
+       9. CHIPS (etiquetas)
+       ========================================================= */
+    .chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 3px 10px; border-radius: 6px;
+      font-size: .75rem; font-weight: 600; white-space: nowrap;
+    }
+    .chip.leg { background: var(--leg-bg); color: var(--leg-fg); }
+    .chip.exe { background: var(--exe-bg); color: var(--exe-fg); }
+    .chip.jud { background: var(--jud-bg); color: var(--jud-fg); }
+    .chip.ger { background: var(--ger-bg); color: var(--ger-fg); }
+    .chip.status { background: var(--soft); color: var(--text); border-radius: 999px; padding: 5px 12px; font-size: .82rem; font-weight: 500; }
+    .chip.status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+
+    /* =========================================================
+       10. QUIZ
+       ========================================================= */
+    .quiz { overflow: hidden; scroll-margin-top: 80px; }
+
+    .quiz-topo {
+      padding: 26px 30px 20px;
+      display: flex; gap: 16px; align-items: flex-start; justify-content: space-between; flex-wrap: wrap;
+    }
+    .quiz-titulo { display: flex; gap: 14px; align-items: flex-start; min-width: 0; }
+    .quiz-titulo h2 { font-size: clamp(1.35rem, 2.6vw, 1.7rem); }
+    .quiz-titulo .sub { color: var(--muted); font-size: .88rem; margin-top: 4px; }
+
+    .num {
+      flex: none; width: 34px; height: 34px; margin-top: 2px;
+      display: grid; place-items: center;
+      border-radius: 8px; background: var(--ink); color: #fff;
+      font-weight: 700; font-size: .95rem; font-variant-numeric: tabular-nums;
+    }
+    .num.pop { animation: pop .35s var(--ease); }
+    @keyframes pop { 50% { transform: scale(1.18); } }
+
+    .progresso { display: flex; align-items: center; gap: 12px; color: var(--text); font-size: .88rem; font-variant-numeric: tabular-nums; }
+    .progresso .barra { width: 110px; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+    .progresso .barra i { display: block; height: 100%; width: 0; background: var(--ink); border-radius: 3px; transition: width .5s var(--ease); }
+
+    .quiz-corpo { border-top: 1px solid var(--line); padding: 26px 30px 30px; }
+
+    .cena { animation: entrar .45s var(--ease) both; }
+    @keyframes entrar { from { opacity: .001; transform: translateX(18px); } to { opacity: 1; transform: none; } }
+
+    /* Tela inicial */
+    .inicio { display: grid; gap: 18px; }
+    .inicio p { color: var(--muted); max-width: 60ch; }
+    .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .saudacao { color: var(--ink) !important; font-weight: 600; }
+
+    /* Pergunta */
+    .pergunta-linha { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+    .pergunta {
+      margin: 6px 0 20px;
+      font-family: var(--font-display); font-weight: 700;
+      font-size: clamp(1.2rem, 2.4vw, 1.55rem); line-height: 1.3;
+      color: var(--ink); text-wrap: balance;
+    }
+
+    /* Alternativas */
+    .alternativas { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .alt {
+      position: relative; overflow: hidden; isolation: isolate;
+      display: grid; grid-template-columns: 30px 1fr; gap: 12px; align-items: center;
+      width: 100%; padding: 12px 14px;
+      background: var(--surface); border: 1px solid var(--line-strong); border-radius: 12px;
+      font: inherit; font-size: .95rem; color: var(--text); text-align: left;
+      cursor: pointer;
+      transition: transform .18s var(--ease), border-color .18s, background .2s, box-shadow .18s;
+      animation: entrar .4s var(--ease) both;
+    }
+    .alt:nth-child(2) { animation-delay: .05s; }
+    .alt:nth-child(3) { animation-delay: .1s; }
+    .alt:nth-child(4) { animation-delay: .15s; }
+
+    .alt .letra {
+      width: 30px; height: 30px; border-radius: 8px;
+      display: grid; place-items: center;
+      background: var(--soft); color: var(--muted);
+      font-weight: 700; font-size: .82rem;
+      transition: background .2s, color .2s, transform .25s var(--ease);
+    }
+    .alt:hover:not(:disabled) { border-color: var(--ink); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(20,20,20,.07); }
+    .alt:hover:not(:disabled) .letra { background: var(--ink); color: #fff; }
+    .alt:active:not(:disabled) { transform: scale(.97); }
+    .alt:disabled { cursor: default; }
+
+    .alt.apagada { opacity: .45; }
+    .alt.certa { border-color: var(--ok); background: var(--ok-bg); opacity: 1; animation: acerto .5s var(--ease); }
+    .alt.certa .letra { background: var(--ok); color: #fff; transform: scale(1.08); }
+    .alt.errada { border-color: var(--bad); background: var(--bad-bg); opacity: 1; animation: tremer .45s ease; }
+    .alt.errada .letra { background: var(--bad); color: #fff; }
+    @keyframes acerto { 40% { transform: scale(1.03); } 100% { transform: none; } }
+    @keyframes tremer { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+
+    /* Explicação após responder */
+    .feedback {
+      margin-top: 18px; padding: 14px 16px;
+      display: grid; gap: 4px;
+      background: var(--soft); border: 1px solid var(--line); border-radius: 12px;
+      animation: abrir .4s var(--ease) both;
+    }
+    @keyframes abrir { from { opacity: .001; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+    .feedback .fonte { font-size: .8rem; color: var(--muted); }
+    .feedback strong.ok { color: var(--ok); }
+    .feedback strong.bad { color: var(--bad); }
+
+    .rodape-quiz { margin-top: 20px; display: flex; justify-content: flex-end; align-items: center; gap: 12px; }
+
+    /* Resultado */
+    .resultado { display: grid; gap: 20px; }
+    .participante { color: var(--muted); font-size: .92rem; }
+    .participante b { color: var(--ink); }
+    .placar { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+    .placar b { font-family: var(--font-display); font-size: clamp(3.4rem, 9vw, 5rem); color: var(--ink); line-height: 1; font-variant-numeric: tabular-nums; }
+    .placar span { color: var(--muted); font-size: 1.1rem; }
+    .veredito { font-family: var(--font-display); font-size: 1.3rem; font-weight: 600; color: var(--ink); max-width: 46ch; }
+
+    .por-poder { display: grid; gap: 12px; max-width: 520px; }
+    .linha { display: grid; grid-template-columns: 112px 1fr 44px; gap: 12px; align-items: center; font-size: .92rem; }
+    .linha .barra { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+    .linha .barra i { display: block; height: 100%; width: 0; background: var(--ink); border-radius: 4px; transition: width .9s var(--ease); }
+    .linha .n { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+    .acoes-fim { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    /* =========================================================
+       11. POPUP DE CADASTRO
+       ========================================================= */
+    .modal-fundo {
+      position: fixed; inset: 0; z-index: 100;
+      display: grid; place-items: center;
+      padding: 16px;
+      background: rgba(20,20,20,.45);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      animation: aparecer .3s ease both;
+    }
+    @keyframes aparecer { from { opacity: 0; } to { opacity: 1; } }
+
+    .modal {
+      width: 100%; max-width: 460px; max-height: calc(100vh - 32px); overflow-y: auto;
+      padding: 30px 28px 26px;
+      background: var(--surface); border-radius: 22px; box-shadow: var(--shadow-up);
+      animation: subir .45s var(--ease) both;
+    }
+    .modal h2 { font-size: 1.6rem; margin-top: 6px; }
+    .modal .intro { color: var(--muted); font-size: .92rem; margin: 8px 0 22px; }
+
+    .campos { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .campo { display: grid; gap: 6px; min-width: 0; }
+    .campo.inteiro { grid-column: 1 / -1; }
+    .campo label { font-size: .85rem; font-weight: 600; color: var(--ink); }
+    .campo label .obrig { color: var(--bad); }
+    .campo input {
+      width: 100%; padding: 11px 13px;
+      font: inherit; font-size: 1rem; color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--line-strong); border-radius: 10px;
+      transition: border-color .18s, box-shadow .18s;
+    }
+    .campo input:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 3px rgba(20,20,20,.08); }
+    .campo input.invalido { border-color: var(--bad); background: var(--bad-bg); }
+    .campo .erro { font-size: .78rem; color: var(--bad); min-height: 1em; }
+
+    .modal .btn-dark { width: 100%; margin-top: 20px; padding-block: 14px; }
+    .modal .aviso { margin-top: 12px; text-align: center; font-size: .78rem; color: var(--muted); }
+
+    /* =========================================================
+       12. RODAPÉ
+       ========================================================= */
+    .rodape { padding-block: 8px 36px; color: var(--muted); font-size: .85rem; }
+    .rodape .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+    /* =========================================================
+       13. RESPONSIVO
+       ========================================================= */
+    @media (max-width: 860px) {
+      .hero { grid-template-columns: 1fr; }
+      .hero-texto { padding: 32px 24px 8px; }
+      .hero-arte { border-left: 0; min-height: 220px; background: linear-gradient(180deg, var(--surface) 0%, #eef3f8 100%); }
+      .artigo { grid-template-columns: 1fr; padding: 28px 24px; gap: 12px; }
+      .artigo .ref { grid-auto-flow: column; justify-content: start; align-items: baseline; gap: 12px; }
+      .poderes { grid-template-columns: 1fr; }
+      .alternativas { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 520px) {
+      body { font-size: .98rem; }
+
+      /* Cabeçalho */
+      .topo .wrap { padding-block: 10px; }
+      .topo nav a.link { display: none; }
+      .topo nav .btn-dark { padding: 9px 16px; font-size: .85rem; }
+      .marca { font-size: 1.05rem; }
+
+      /* Painéis */
+      main { gap: 14px; padding-block: 14px 28px; }
+      .painel { border-radius: 18px; }
+
+      /* Hero */
+      .hero-texto { padding: 26px 20px 6px; gap: 14px; }
+      .hero h1 { font-size: 2rem; }
+      .hero .lead { font-size: 1rem; }
+      .hero .acoes { display: grid; grid-template-columns: 1fr; gap: 8px; }
+      .hero .acoes .btn { width: 100%; padding-block: 14px; }
+      .hero-arte { min-height: 170px; }
+      .sol { width: 80px; height: 80px; top: 16px; right: 24px; }
+      .hero-arte .legenda { left: 14px; bottom: 8px; font-size: .7rem; }
+
+      /* Artigo */
+      .artigo { padding: 22px 20px; }
+      .artigo .ref b { font-size: 2rem; }
+      .artigo blockquote { font-size: 1.2rem; }
+
+      /* Poderes */
+      .poderes { gap: 12px; }
+      .poder { padding: 20px; border-radius: 18px; grid-template-columns: 52px 1fr; column-gap: 14px; }
+      .poder .icone { grid-row: span 2; }
+      .poder .chip { align-self: end; }
+      .poder h3 { font-size: 1.2rem; margin-top: 0; }
+      .poder .orgao, .poder .desc { grid-column: 1 / -1; }
+
+      /* Quiz */
+      .quiz { scroll-margin-top: 64px; }
+      .quiz-topo { padding: 20px 18px 14px; gap: 14px; }
+      .quiz-titulo { flex: 1 1 100%; }
+      .progresso { flex: 1 1 100%; }
+      .progresso .barra { flex: 1; width: auto; }
+      .quiz-corpo { padding: 18px 18px 0; }
+      .pergunta { font-size: 1.22rem; margin: 4px 0 16px; }
+      .alt { padding: 14px; min-height: 58px; font-size: 1rem; border-radius: 14px; }
+      .alt .letra { width: 32px; height: 32px; }
+      .feedback { font-size: .95rem; }
+
+      /* Barra de ação fixa no rodapé (alcance do polegar) */
+      .rodape-quiz {
+        position: sticky; bottom: 0; z-index: 5;
+        margin: 16px -18px 0; padding: 12px 18px calc(12px + env(safe-area-inset-bottom, 0px));
+        background: rgba(255,255,255,.94);
+        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        border-top: 1px solid var(--line);
+      }
+      .rodape-quiz .btn-dark { flex: 1 1 160px; padding-block: 14px; }
+      .inicio, .resultado { padding-bottom: 22px; }
+      .inicio .btn-dark, .acoes-fim .btn { width: 100%; padding-block: 14px; }
+      .acoes-fim { display: grid; grid-template-columns: 1fr; gap: 8px; }
+
+      /* Resultado */
+      .placar b { font-size: 3.6rem; }
+      .linha { grid-template-columns: 96px 1fr 40px; }
+
+      /* Popup */
+      .modal { padding: 24px 20px 20px; border-radius: 18px; }
+      .campos { grid-template-columns: 1fr; }
+
+      /* Rodapé */
+      .rodape .wrap { justify-content: center; text-align: center; }
+    }
+
+    /* Telas de toque: sem efeito hover "preso" */
+    @media (hover: none) {
+      .btn:hover, .poder:hover { transform: none; box-shadow: var(--shadow); }
+      .btn:hover:not(.btn-dark) { border-color: var(--line-strong); box-shadow: none; }
+      .btn-dark:hover { background: var(--ink); box-shadow: none; }
+      .alt:hover:not(:disabled) { transform: none; border-color: var(--line-strong); box-shadow: none; background: var(--surface); }
+      .alt:hover:not(:disabled) .letra { background: var(--soft); color: var(--muted); }
+      .poder:hover .icone { transform: none; }
+      .alt:active:not(:disabled) { transform: scale(.97); background: var(--soft); }
+    }
+
+    /* Acessibilidade: menos animação */
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
 </head>
-<body>
 
-<header class="topo">
-  <div class="wrap">
-    <a class="marca" href="#inicio">
-      <svg viewBox="0 0 28 20" aria-hidden="true"><rect x="12" y="0" width="2" height="17" fill="currentColor"/><rect x="15" y="0" width="2" height="17" fill="currentColor"/><path d="M1 17 A6 5 0 0 1 11 17Z" fill="currentColor"/><path d="M18 14 H27 Q26 17 22.5 17 Q19 17 18 14Z" fill="currentColor"/><rect x="0" y="17" width="28" height="2" fill="currentColor"/></svg>
-      Três Poderes
-    </a>
-    <nav>
-      <a class="link" href="#artigo">Constituição</a>
-      <a class="link" href="#poderes">Os Poderes</a>
-      <a class="btn btn-dark" href="#quiz">Fazer o quiz</a>
-    </nav>
-  </div>
-</header>
+<body class="travado">
 
-<main class="wrap" id="inicio">
-  <section class="painel hero">
-    <div class="hero-texto">
-      <span class="eyebrow">Brasília · Praça dos Três Poderes</span>
-      <h1>Quem faz a lei, quem governa e <i>quem julga?</i></h1>
-      <p class="lead">Um quiz de 15 perguntas sobre o Legislativo, o Executivo e o Judiciário, com base na Constituição Federal de 1988.</p>
-      <div class="acoes">
-        <a class="btn btn-dark" href="#quiz">Começar o quiz</a>
-        <a class="btn" href="#poderes">Conhecer os Poderes</a>
-      </div>
-    </div>
-    <div class="hero-arte">
-      <div class="sol"></div>
-      <svg class="congresso" viewBox="0 0 440 230" role="img" aria-label="Desenho do Congresso Nacional">
-        <rect class="massa" x="200" y="18" width="16" height="178" rx="1"/>
-        <rect class="massa" x="224" y="18" width="16" height="178" rx="1"/>
-        <rect class="massa" x="200" y="84" width="40" height="8"/>
-        <path class="traco" d="M70 196 A58 46 0 0 1 186 196"/>
-        <path class="traco" d="M254 158 L398 158 Q386 196 326 198 Q266 196 254 158 Z"/>
-        <path class="traco" d="M20 196 H420"/>
-        <path class="traco" d="M40 206 H400" opacity=".35"/>
-        <path class="traco" d="M70 216 H370" opacity=".2"/>
-      </svg>
-      <span class="legenda">Congresso Nacional · Oscar Niemeyer, 1960</span>
-    </div>
-  </section>
+  <!-- =========================================================
+       POPUP DE CADASTRO (obrigatório)
+       ========================================================= -->
+  <div class="modal-fundo" id="modal-cadastro">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+      <span class="eyebrow">Antes de começar</span>
+      <h2 id="modal-titulo">Identifique-se</h2>
+      <p class="intro">Preencha seus dados para acessar o quiz. Todos os campos são obrigatórios.</p>
 
-  <section class="painel artigo" id="artigo">
-    <div class="ref"><span class="eyebrow">CF/88</span><b>Art. 2º</b></div>
-    <div>
-      <blockquote>“São Poderes da União, independentes e harmônicos entre si, o Legislativo, o Executivo e o Judiciário.”</blockquote>
-      <p class="nota">A separação foi sistematizada por Montesquieu em <em>O Espírito das Leis</em> (1748). Cada poder tem uma função principal e controla os outros dois. Esse controle recíproco é chamado de sistema de freios e contrapesos.</p>
-    </div>
-  </section>
-
-  <section class="poderes" id="poderes">
-    <article class="poder">
-      <div class="icone"><svg viewBox="0 0 34 22" aria-hidden="true"><path d="M2 19 A7 6 0 0 1 15 19Z M18 14 H32 Q31 19 25 19 Q19 19 18 14Z" fill="currentColor"/><rect y="19" width="34" height="2" fill="currentColor"/></svg></div>
-      <span class="chip leg" style="justify-self:start">Legislativo</span>
-      <h3>Congresso Nacional</h3>
-      <p class="orgao">Câmara (513 deputados) · Senado (81 senadores)</p>
-      <p class="desc">Cria as leis e fiscaliza o Executivo, com auxílio do Tribunal de Contas da União.</p>
-    </article>
-    <article class="poder">
-      <div class="icone"><svg viewBox="0 0 34 22" aria-hidden="true"><rect y="4" width="34" height="2" fill="currentColor"/><rect y="19" width="34" height="2" fill="currentColor"/><path d="M3 6 L5.5 19 L8 6Z M12 6 L14.5 19 L17 6Z M21 6 L23.5 19 L26 6Z M29 6 L31 19 L33 6Z" fill="currentColor"/></svg></div>
-      <span class="chip exe" style="justify-self:start">Executivo</span>
-      <h3>Presidência da República</h3>
-      <p class="orgao">Palácio do Planalto · Ministérios</p>
-      <p class="desc">Administra o país e executa as leis. O Presidente é chefe de Estado e de Governo.</p>
-    </article>
-    <article class="poder">
-      <div class="icone"><svg viewBox="0 0 34 22" aria-hidden="true"><rect y="3" width="34" height="2" fill="currentColor"/><rect y="19" width="34" height="2" fill="currentColor"/><path d="M5 5 Q2 12 5 19 H8 Q5 12 8 5Z M15 5 Q12 12 15 19 H18 Q15 12 18 5Z M25 5 Q22 12 25 19 H28 Q25 12 28 5Z" fill="currentColor"/></svg></div>
-      <span class="chip jud" style="justify-self:start">Judiciário</span>
-      <h3>Supremo Tribunal Federal</h3>
-      <p class="orgao">11 ministros · guardião da Constituição</p>
-      <p class="desc">Julga conflitos e garante que leis e atos do governo respeitem a Constituição.</p>
-    </article>
-  </section>
-
-  <section class="painel quiz" id="quiz">
-    <div class="quiz-topo">
-      <div class="quiz-titulo">
-        <span class="num" id="num">?</span>
-        <div>
-          <h2 id="quiz-titulo">Quiz dos Três Poderes</h2>
-          <p class="sub" id="quiz-sub">15 perguntas · múltipla escolha</p>
-        </div>
-      </div>
-      <div class="progresso">
-        <span class="barra"><i id="barra"></i></span>
-        <span id="prog-txt">0/15 · 0%</span>
-      </div>
-    </div>
-
-    <div class="quiz-corpo">
-      <!-- Início -->
-      <div class="inicio cena" id="tela-inicio">
-        <p>As perguntas aparecem em ordem aleatória. Depois de cada resposta, você vê a explicação e o artigo da Constituição relacionado. No final, o placar mostra seu desempenho em cada poder.</p>
-        <div class="chips">
-          <span class="chip leg">Legislativo</span>
-          <span class="chip exe">Executivo</span>
-          <span class="chip jud">Judiciário</span>
-          <span class="chip ger">Geral</span>
-        </div>
-        <div><button class="btn btn-dark" id="btn-iniciar" type="button">Começar</button></div>
-      </div>
-
-      <!-- Pergunta -->
-      <div id="tela-pergunta" hidden>
-        <div class="cena" id="cena">
-          <div class="pergunta-linha">
-            <span class="chip" id="tag-poder"></span>
-            <span class="chip status" id="status">Aguardando resposta</span>
+      <form id="form-cadastro" novalidate>
+        <div class="campos">
+          <div class="campo">
+            <label for="nome">Nome <span class="obrig">*</span></label>
+            <input type="text" id="nome" name="nome" autocomplete="given-name" required>
+            <span class="erro" id="erro-nome"></span>
           </div>
-          <p class="pergunta" id="pergunta"></p>
-          <div class="alternativas" id="alternativas"></div>
-          <div class="feedback" id="feedback" hidden>
-            <p id="explicacao"></p>
-            <span class="fonte" id="fonte"></span>
+
+          <div class="campo">
+            <label for="sobrenome">Sobrenome <span class="obrig">*</span></label>
+            <input type="text" id="sobrenome" name="sobrenome" autocomplete="family-name" required>
+            <span class="erro" id="erro-sobrenome"></span>
+          </div>
+
+          <div class="campo">
+            <label for="idade">Idade <span class="obrig">*</span></label>
+            <input type="number" id="idade" name="idade" inputmode="numeric" min="1" max="120" required>
+            <span class="erro" id="erro-idade"></span>
+          </div>
+
+          <div class="campo">
+            <label for="curso">Curso <span class="obrig">*</span></label>
+            <input type="text" id="curso" name="curso" placeholder="Ex.: Direito" required>
+            <span class="erro" id="erro-curso"></span>
           </div>
         </div>
-        <div class="rodape-quiz">
-          <label class="toggle" for="auto">
-            <input type="checkbox" id="auto">
-            <span class="trilho"></span>
-            Avançar sozinho
-          </label>
-          <button class="btn btn-dark" id="btn-proxima" type="button" hidden>Próxima</button>
-        </div>
-      </div>
 
-      <!-- Resultado -->
-      <div class="resultado" id="tela-resultado" hidden>
-        <span class="eyebrow">Resultado</span>
-        <div class="placar"><b id="acertos">0</b><span>de <span id="total">15</span> acertos</span></div>
-        <p class="veredito" id="mensagem"></p>
-        <div class="por-poder" id="por-poder"></div>
-        <div class="acoes-fim">
-          <button class="btn btn-dark" id="btn-reiniciar" type="button">Jogar de novo</button>
-          <a class="btn" href="#poderes">Revisar os Poderes</a>
-        </div>
-      </div>
+        <button class="btn btn-dark" type="submit">Continuar</button>
+        <p class="aviso">Você só pode prosseguir após preencher todos os campos.</p>
+      </form>
     </div>
-  </section>
-</main>
-
-<footer class="rodape">
-  <div class="wrap">
-    <span>Trabalho acadêmico · Quiz dos Três Poderes</span>
-    <span>Fonte: Constituição Federal de 1988</span>
   </div>
-</footer>
 
-<script>
-const PODERES = {
-  "Legislativo": "leg", "Executivo": "exe", "Judiciário": "jud", "Geral": "ger"
-};
+  <!-- =========================================================
+       CABEÇALHO
+       ========================================================= -->
+  <header class="topo">
+    <div class="wrap">
+      <a class="marca" href="#inicio">
+        <svg viewBox="0 0 28 20" aria-hidden="true">
+          <rect x="12" y="0" width="2" height="17" fill="currentColor"/>
+          <rect x="15" y="0" width="2" height="17" fill="currentColor"/>
+          <path d="M1 17 A6 5 0 0 1 11 17Z" fill="currentColor"/>
+          <path d="M18 14 H27 Q26 17 22.5 17 Q19 17 18 14Z" fill="currentColor"/>
+          <rect x="0" y="17" width="28" height="2" fill="currentColor"/>
+        </svg>
+        Três Poderes
+      </a>
+      <nav>
+        <a class="link" href="#artigo">Constituição</a>
+        <a class="link" href="#poderes">Os Poderes</a>
+        <a class="btn btn-dark" href="#quiz">Fazer o quiz</a>
+      </nav>
+    </div>
+  </header>
 
-// Para adicionar perguntas: copie um bloco e altere. "correta" = posição da alternativa certa (0 = primeira).
-const perguntas = [
-  { poder: "Geral", pergunta: "Qual filósofo sistematizou a teoria da separação dos três poderes?",
-    alternativas: ["Rousseau", "Montesquieu", "Maquiavel", "John Locke"], correta: 1,
-    explicacao: "Montesquieu desenvolveu a teoria em O Espírito das Leis, publicado em 1748.", fonte: "O Espírito das Leis, 1748" },
-  { poder: "Geral", pergunta: "Qual artigo da Constituição de 1988 estabelece os três poderes?",
-    alternativas: ["Art. 1º", "Art. 2º", "Art. 5º", "Art. 60"], correta: 1,
-    explicacao: "O Art. 2º diz que os Poderes da União são independentes e harmônicos entre si.", fonte: "CF/88, Art. 2º" },
-  { poder: "Legislativo", pergunta: "Qual é a principal função do Poder Legislativo?",
-    alternativas: ["Julgar processos", "Administrar o país", "Elaborar leis e fiscalizar o Executivo", "Comandar as Forças Armadas"], correta: 2,
-    explicacao: "O Legislativo cria as leis e fiscaliza os atos do Executivo, com o auxílio do Tribunal de Contas da União.", fonte: "CF/88, Arts. 48, 49 e 70" },
-  { poder: "Legislativo", pergunta: "O Congresso Nacional é formado por:",
-    alternativas: ["Câmara dos Deputados e Senado Federal", "Senado Federal e STF", "Câmara dos Deputados e Assembleias Legislativas", "Presidência e Ministérios"], correta: 0,
-    explicacao: "O Legislativo federal é bicameral: Câmara dos Deputados e Senado Federal.", fonte: "CF/88, Art. 44" },
-  { poder: "Legislativo", pergunta: "Quantos senadores cada estado elege?",
-    alternativas: ["1", "2", "3", "Depende da população"], correta: 2,
-    explicacao: "Cada estado e o Distrito Federal elegem 3 senadores, num total de 81, com mandato de 8 anos.", fonte: "CF/88, Art. 46" },
-  { poder: "Legislativo", pergunta: "Qual é a duração do mandato de um deputado federal?",
-    alternativas: ["2 anos", "4 anos", "6 anos", "8 anos"], correta: 1,
-    explicacao: "Deputados federais têm mandato de 4 anos, que corresponde a uma legislatura.", fonte: "CF/88, Art. 44, parágrafo único" },
-  { poder: "Executivo", pergunta: "Quem chefia o Poder Executivo federal?",
-    alternativas: ["O Presidente do Senado", "O Presidente do STF", "O Presidente da República", "O Ministro da Justiça"], correta: 2,
-    explicacao: "O Presidente da República exerce o Executivo, auxiliado pelos Ministros de Estado.", fonte: "CF/88, Art. 76" },
-  { poder: "Executivo", pergunta: "Nos estados, quem exerce o Poder Executivo?",
-    alternativas: ["Prefeito", "Governador", "Deputado estadual", "Desembargador"], correta: 1,
-    explicacao: "Nos estados é o Governador. Nos municípios, o Prefeito.", fonte: "CF/88, Arts. 28 e 29" },
-  { poder: "Executivo", pergunta: "O que é o veto presidencial?",
-    alternativas: ["A anulação de uma decisão judicial", "A recusa do Presidente em sancionar, total ou parcialmente, um projeto de lei", "A dissolução do Congresso", "A nomeação de ministros"], correta: 1,
-    explicacao: "O Congresso pode derrubar o veto por maioria absoluta. É um exemplo de freios e contrapesos.", fonte: "CF/88, Art. 66" },
-  { poder: "Executivo", pergunta: "Qual instrumento permite ao Presidente editar normas com força de lei em casos de relevância e urgência?",
-    alternativas: ["Decreto legislativo", "Emenda constitucional", "Medida provisória", "Súmula vinculante"], correta: 2,
-    explicacao: "A medida provisória tem força de lei, mas precisa ser aprovada pelo Congresso para continuar valendo.", fonte: "CF/88, Art. 62" },
-  { poder: "Judiciário", pergunta: "Qual é o órgão máximo do Poder Judiciário brasileiro?",
-    alternativas: ["STJ", "TSE", "STF", "TST"], correta: 2,
-    explicacao: "O Supremo Tribunal Federal é o guardião da Constituição.", fonte: "CF/88, Art. 102" },
-  { poder: "Judiciário", pergunta: "Quantos ministros compõem o STF?",
-    alternativas: ["9", "11", "13", "15"], correta: 1,
-    explicacao: "São 11 ministros, indicados pelo Presidente e aprovados pela maioria absoluta do Senado.", fonte: "CF/88, Art. 101" },
-  { poder: "Judiciário", pergunta: "Qual tribunal organiza as eleições no Brasil?",
-    alternativas: ["STF", "STJ", "TSE", "TCU"], correta: 2,
-    explicacao: "O Tribunal Superior Eleitoral organiza e fiscaliza as eleições em todo o país.", fonte: "CF/88, Arts. 118 a 121" },
-  { poder: "Geral", pergunta: "O que significa o sistema de freios e contrapesos?",
-    alternativas: ["Um poder é superior aos outros", "Os poderes se controlam mutuamente para evitar abusos", "Apenas o Judiciário pode controlar os outros", "Os poderes não se relacionam entre si"], correta: 1,
-    explicacao: "Cada poder limita os outros: o Presidente veta leis, o Congresso derruba vetos e o STF declara leis inconstitucionais.", fonte: "CF/88, Art. 2º" },
-  { poder: "Geral", pergunta: "Quem julga o Presidente da República num processo de impeachment por crime de responsabilidade?",
-    alternativas: ["STF", "Câmara dos Deputados", "Senado Federal", "TSE"], correta: 2,
-    explicacao: "A Câmara autoriza a abertura do processo por 2/3 dos votos, e o Senado julga, sob a presidência do presidente do STF.", fonte: "CF/88, Arts. 51, 52 e 86" }
-];
+  <main class="wrap" id="inicio">
 
-const $ = id => document.getElementById(id);
-const telas = { inicio: $("tela-inicio"), pergunta: $("tela-pergunta"), resultado: $("tela-resultado") };
-const LETRAS = "ABCD";
-const reduzido = matchMedia("(prefers-reduced-motion: reduce)").matches;
-let ordem = [], atual = 0, respostas = [], timer = null;
+    <!-- ===================== HERO ===================== -->
+    <section class="painel hero">
+      <div class="hero-texto">
+        <span class="eyebrow">Brasília · Praça dos Três Poderes</span>
+        <h1>Quem faz a lei, quem governa e <i>quem julga?</i></h1>
+        <p class="lead">Um quiz de 15 perguntas sobre o Legislativo, o Executivo e o Judiciário, com base na Constituição Federal de 1988.</p>
+        <div class="acoes">
+          <a class="btn btn-dark" href="#quiz">Começar o quiz</a>
+          <a class="btn" href="#poderes">Conhecer os Poderes</a>
+        </div>
+      </div>
+      <div class="hero-arte">
+        <div class="sol"></div>
+        <svg class="congresso" viewBox="0 0 440 230" role="img" aria-label="Desenho do Congresso Nacional">
+          <rect class="massa" x="200" y="18" width="16" height="178" rx="1"/>
+          <rect class="massa" x="224" y="18" width="16" height="178" rx="1"/>
+          <rect class="massa" x="200" y="84" width="40" height="8"/>
+          <path class="traco" d="M70 196 A58 46 0 0 1 186 196"/>
+          <path class="traco" d="M254 158 L398 158 Q386 196 326 198 Q266 196 254 158 Z"/>
+          <path class="traco" d="M20 196 H420"/>
+          <path class="traco" d="M40 206 H400" opacity=".35"/>
+          <path class="traco" d="M70 216 H370" opacity=".2"/>
+        </svg>
+        <span class="legenda">Congresso Nacional · Oscar Niemeyer, 1960</span>
+      </div>
+    </section>
 
-$("quiz-sub").textContent = `${perguntas.length} perguntas · múltipla escolha`;
-$("prog-txt").textContent = `0/${perguntas.length} · 0%`;
+    <!-- ===================== ARTIGO 2º ===================== -->
+    <section class="painel artigo" id="artigo">
+      <div class="ref"><span class="eyebrow">CF/88</span><b>Art. 2º</b></div>
+      <div>
+        <blockquote>“São Poderes da União, independentes e harmônicos entre si, o Legislativo, o Executivo e o Judiciário.”</blockquote>
+        <p class="nota">A separação foi sistematizada por Montesquieu em <em>O Espírito das Leis</em> (1748). Cada poder tem uma função principal e controla os outros dois. Esse controle recíproco é chamado de sistema de freios e contrapesos.</p>
+      </div>
+    </section>
 
-// Ripple effect on every button click
-document.addEventListener("pointerdown", e => {
-  const alvo = e.target.closest(".btn, .alt");
-  if (!alvo || alvo.disabled || reduzido) return;
-  const r = alvo.getBoundingClientRect(), d = Math.max(r.width, r.height) * 2.2;
-  const s = document.createElement("span");
-  s.className = "ripple";
-  s.style.cssText = `width:${d}px;height:${d}px;left:${e.clientX - r.left - d / 2}px;top:${e.clientY - r.top - d / 2}px`;
-  alvo.appendChild(s);
-  setTimeout(() => s.remove(), 650);
-});
+    <!-- ===================== OS PODERES ===================== -->
+    <section class="poderes" id="poderes">
+      <article class="poder">
+        <div class="icone">
+          <svg viewBox="0 0 34 22" aria-hidden="true">
+            <path d="M2 19 A7 6 0 0 1 15 19Z M18 14 H32 Q31 19 25 19 Q19 19 18 14Z" fill="currentColor"/>
+            <rect y="19" width="34" height="2" fill="currentColor"/>
+          </svg>
+        </div>
+        <span class="chip leg" style="justify-self:start">Legislativo</span>
+        <h3>Congresso Nacional</h3>
+        <p class="orgao">Câmara (513 deputados) · Senado (81 senadores)</p>
+        <p class="desc">Cria as leis e fiscaliza o Executivo, com auxílio do Tribunal de Contas da União.</p>
+      </article>
 
-function mostrar(nome) {
-  for (const k in telas) telas[k].hidden = k !== nome;
-  reanimar(telas[nome].classList.contains("cena") ? telas[nome] : null);
-}
-function reanimar(el) {
-  if (!el) return;
-  el.style.animation = "none"; void el.offsetWidth; el.style.animation = "";
-}
+      <article class="poder">
+        <div class="icone">
+          <svg viewBox="0 0 34 22" aria-hidden="true">
+            <rect y="4" width="34" height="2" fill="currentColor"/>
+            <rect y="19" width="34" height="2" fill="currentColor"/>
+            <path d="M3 6 L5.5 19 L8 6Z M12 6 L14.5 19 L17 6Z M21 6 L23.5 19 L26 6Z M29 6 L31 19 L33 6Z" fill="currentColor"/>
+          </svg>
+        </div>
+        <span class="chip exe" style="justify-self:start">Executivo</span>
+        <h3>Presidência da República</h3>
+        <p class="orgao">Palácio do Planalto · Ministérios</p>
+        <p class="desc">Administra o país e executa as leis. O Presidente é chefe de Estado e de Governo.</p>
+      </article>
 
-function embaralhar(lista) {
-  const c = [...lista];
-  for (let i = c.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [c[i], c[j]] = [c[j], c[i]]; }
-  return c;
-}
+      <article class="poder">
+        <div class="icone">
+          <svg viewBox="0 0 34 22" aria-hidden="true">
+            <rect y="3" width="34" height="2" fill="currentColor"/>
+            <rect y="19" width="34" height="2" fill="currentColor"/>
+            <path d="M5 5 Q2 12 5 19 H8 Q5 12 8 5Z M15 5 Q12 12 15 19 H18 Q15 12 18 5Z M25 5 Q22 12 25 19 H28 Q25 12 28 5Z" fill="currentColor"/>
+          </svg>
+        </div>
+        <span class="chip jud" style="justify-self:start">Judiciário</span>
+        <h3>Supremo Tribunal Federal</h3>
+        <p class="orgao">11 ministros · guardião da Constituição</p>
+        <p class="desc">Julga conflitos e garante que leis e atos do governo respeitem a Constituição.</p>
+      </article>
+    </section>
 
-function atualizarProgresso(feitas) {
-  const pct = Math.round(feitas / ordem.length * 100);
-  $("barra").style.width = pct + "%";
-  $("prog-txt").textContent = `${feitas}/${ordem.length} · ${pct}%`;
-}
+    <!-- ===================== QUIZ ===================== -->
+    <section class="painel quiz" id="quiz">
+      <div class="quiz-topo">
+        <div class="quiz-titulo">
+          <span class="num" id="num">?</span>
+          <div>
+            <h2 id="quiz-titulo">Quiz dos Três Poderes</h2>
+            <p class="sub" id="quiz-sub">15 perguntas · múltipla escolha</p>
+          </div>
+        </div>
+        <div class="progresso">
+          <span class="barra"><i id="barra"></i></span>
+          <span id="prog-txt">0/15 · 0%</span>
+        </div>
+      </div>
 
-function iniciar() {
-  clearTimeout(timer);
-  ordem = embaralhar(perguntas); atual = 0; respostas = [];
-  atualizarProgresso(0);
-  mostrar("pergunta"); renderPergunta();
-  $("quiz").scrollIntoView({ behavior: reduzido ? "auto" : "smooth", block: "start" });
-}
+      <div class="quiz-corpo">
 
-function renderPergunta() {
-  const p = ordem[atual];
-  const num = $("num"); num.textContent = atual + 1; num.classList.remove("pop"); void num.offsetWidth; num.classList.add("pop");
-  $("quiz-titulo").textContent = `Pergunta ${atual + 1}`;
-  $("quiz-sub").textContent = `de ${ordem.length} · ${p.poder}`;
-  const tag = $("tag-poder"); tag.textContent = p.poder; tag.className = "chip " + PODERES[p.poder];
-  $("status").textContent = "Aguardando resposta";
-  $("pergunta").textContent = p.pergunta;
-  $("feedback").hidden = true; $("btn-proxima").hidden = true;
-  const box = $("alternativas"); box.innerHTML = "";
-  p.alternativas.forEach((txt, i) => {
-    const b = document.createElement("button");
-    b.type = "button"; b.className = "alt";
-    b.innerHTML = `<span class="letra">${LETRAS[i]}</span><span></span>`;
-    b.lastChild.textContent = txt;
-    b.addEventListener("click", () => responder(i));
-    box.appendChild(b);
-  });
-  reanimar($("cena"));
-  if (atual > 0 && innerWidth < 700) $("quiz").scrollIntoView({ behavior: reduzido ? "auto" : "smooth", block: "start" });
-}
+        <!-- Tela inicial -->
+        <div class="inicio cena" id="tela-inicio">
+          <p class="saudacao" id="saudacao"></p>
+          <p>As perguntas aparecem em ordem aleatória. Depois de cada resposta, você vê a explicação e o artigo da Constituição relacionado. No final, o placar mostra seu desempenho em cada poder.</p>
+          <div class="chips">
+            <span class="chip leg">Legislativo</span>
+            <span class="chip exe">Executivo</span>
+            <span class="chip jud">Judiciário</span>
+            <span class="chip ger">Geral</span>
+          </div>
+          <div><button class="btn btn-dark" id="btn-iniciar" type="button">Começar</button></div>
+        </div>
 
-function responder(i) {
-  const p = ordem[atual], botoes = [...$("alternativas").children], certo = i === p.correta;
-  botoes.forEach((b, k) => { b.disabled = true; if (k !== p.correta && k !== i) b.classList.add("apagada"); });
-  botoes[p.correta].classList.add("certa");
-  if (!certo) botoes[i].classList.add("errada");
-  respostas[atual] = certo;
-  try { navigator.vibrate && navigator.vibrate(certo ? 25 : [40, 60, 40]); } catch (e) {}
-  $("status").textContent = certo ? "Acertou" : "Errou";
-  const exp = $("explicacao");
-  exp.innerHTML = `<strong class="${certo ? "ok" : "bad"}">${certo ? "Correto." : "Errado."}</strong> `;
-  exp.append(p.explicacao);
-  $("fonte").textContent = p.fonte;
-  $("feedback").hidden = false;
-  atualizarProgresso(atual + 1);
-  const btn = $("btn-proxima");
-  btn.textContent = atual === ordem.length - 1 ? "Ver resultado" : "Próxima →";
-  btn.hidden = false;
-  if ($("auto").checked) timer = setTimeout(proxima, 2200);
-}
+        <!-- Tela da pergunta -->
+        <div id="tela-pergunta" hidden>
+          <div class="cena" id="cena">
+            <div class="pergunta-linha">
+              <span class="chip" id="tag-poder"></span>
+              <span class="chip status" id="status">Aguardando resposta</span>
+            </div>
+            <p class="pergunta" id="pergunta"></p>
+            <div class="alternativas" id="alternativas"></div>
+            <div class="feedback" id="feedback" hidden>
+              <p id="explicacao"></p>
+              <span class="fonte" id="fonte"></span>
+            </div>
+          </div>
+          <div class="rodape-quiz">
+            <button class="btn btn-dark" id="btn-proxima" type="button" hidden>Próxima</button>
+          </div>
+        </div>
 
-function proxima() {
-  clearTimeout(timer);
-  atual++;
-  atual < ordem.length ? renderPergunta() : resultado();
-}
+        <!-- Tela de resultado -->
+        <div class="resultado" id="tela-resultado" hidden>
+          <span class="eyebrow">Resultado</span>
+          <p class="participante" id="participante"></p>
+          <div class="placar"><b id="acertos">0</b><span>de <span id="total">15</span> acertos</span></div>
+          <p class="veredito" id="mensagem"></p>
+          <div class="por-poder" id="por-poder"></div>
+          <div class="acoes-fim">
+            <button class="btn btn-dark" id="btn-reiniciar" type="button">Jogar de novo</button>
+            <a class="btn" href="#poderes">Revisar os Poderes</a>
+          </div>
+        </div>
 
-function contar(el, ate) {
-  if (reduzido) { el.textContent = ate; return; }
-  const t0 = performance.now(), dur = 900;
-  (function passo(t) {
-    const k = Math.min(1, (t - t0) / dur);
-    el.textContent = Math.round(ate * (1 - Math.pow(1 - k, 3)));
-    if (k < 1) requestAnimationFrame(passo);
-  })(t0);
-}
+      </div>
+    </section>
+  </main>
 
-function resultado() {
-  const acertos = respostas.filter(Boolean).length, total = ordem.length, pct = acertos / total;
-  $("num").textContent = "✓";
-  $("quiz-titulo").textContent = "Quiz concluído";
-  $("quiz-sub").textContent = `${acertos} de ${total} acertos`;
-  $("total").textContent = total;
-  $("mensagem").textContent =
-    pct === 1 ? "Gabaritou! Você domina a organização dos Poderes." :
-    pct >= .7 ? "Muito bem. Você conhece bem o assunto." :
-    pct >= .4 ? "Bom começo. Vale revisar os pontos que errou." :
-                "Releia a seção sobre os Poderes e tente de novo.";
-  $("por-poder").innerHTML = Object.keys(PODERES).map(nome => {
-    const idx = ordem.map((p, i) => p.poder === nome ? i : -1).filter(i => i >= 0);
-    const ok = idx.filter(i => respostas[i]).length, t = idx.length;
-    return `<div class="linha"><span class="chip ${PODERES[nome]}" style="justify-self:start">${nome}</span><span class="barra"><i data-w="${t ? ok / t * 100 : 0}"></i></span><span class="n">${ok}/${t}</span></div>`;
-  }).join("");
-  mostrar("resultado");
-  contar($("acertos"), acertos);
-  requestAnimationFrame(() => requestAnimationFrame(() =>
-    document.querySelectorAll(".linha .barra i").forEach(i => i.style.width = i.dataset.w + "%")
-  ));
-}
+  <!-- =========================================================
+       RODAPÉ
+       ========================================================= -->
+  <footer class="rodape">
+    <div class="wrap">
+      <span>Trabalho acadêmico · Quiz dos Três Poderes</span>
+      <span>Fonte: Constituição Federal de 1988</span>
+    </div>
+  </footer>
 
-$("btn-iniciar").addEventListener("click", iniciar);
-$("btn-reiniciar").addEventListener("click", iniciar);
-$("btn-proxima").addEventListener("click", proxima);
-</script>
+
+  <script>
+    /* =========================================================
+       1. DADOS DO QUIZ
+       Para adicionar perguntas: copie um bloco e altere.
+       "correta" = posição da alternativa certa (0 = primeira).
+       ========================================================= */
+    const PODERES = {
+      "Legislativo": "leg",
+      "Executivo":   "exe",
+      "Judiciário":  "jud",
+      "Geral":       "ger"
+    };
+
+    const perguntas = [
+      {
+        poder: "Geral",
+        pergunta: "Qual filósofo sistematizou a teoria da separação dos três poderes?",
+        alternativas: ["Rousseau", "Montesquieu", "Maquiavel", "John Locke"],
+        correta: 1,
+        explicacao: "Montesquieu desenvolveu a teoria em O Espírito das Leis, publicado em 1748.",
+        fonte: "O Espírito das Leis, 1748"
+      },
+      {
+        poder: "Geral",
+        pergunta: "Qual artigo da Constituição de 1988 estabelece os três poderes?",
+        alternativas: ["Art. 1º", "Art. 2º", "Art. 5º", "Art. 60"],
+        correta: 1,
+        explicacao: "O Art. 2º diz que os Poderes da União são independentes e harmônicos entre si.",
+        fonte: "CF/88, Art. 2º"
+      },
+      {
+        poder: "Legislativo",
+        pergunta: "Qual é a principal função do Poder Legislativo?",
+        alternativas: ["Julgar processos", "Administrar o país", "Elaborar leis e fiscalizar o Executivo", "Comandar as Forças Armadas"],
+        correta: 2,
+        explicacao: "O Legislativo cria as leis e fiscaliza os atos do Executivo, com o auxílio do Tribunal de Contas da União.",
+        fonte: "CF/88, Arts. 48, 49 e 70"
+      },
+      {
+        poder: "Legislativo",
+        pergunta: "O Congresso Nacional é formado por:",
+        alternativas: ["Câmara dos Deputados e Senado Federal", "Senado Federal e STF", "Câmara dos Deputados e Assembleias Legislativas", "Presidência e Ministérios"],
+        correta: 0,
+        explicacao: "O Legislativo federal é bicameral: Câmara dos Deputados e Senado Federal.",
+        fonte: "CF/88, Art. 44"
+      },
+      {
+        poder: "Legislativo",
+        pergunta: "Quantos senadores cada estado elege?",
+        alternativas: ["1", "2", "3", "Depende da população"],
+        correta: 2,
+        explicacao: "Cada estado e o Distrito Federal elegem 3 senadores, num total de 81, com mandato de 8 anos.",
+        fonte: "CF/88, Art. 46"
+      },
+      {
+        poder: "Legislativo",
+        pergunta: "Qual é a duração do mandato de um deputado federal?",
+        alternativas: ["2 anos", "4 anos", "6 anos", "8 anos"],
+        correta: 1,
+        explicacao: "Deputados federais têm mandato de 4 anos, que corresponde a uma legislatura.",
+        fonte: "CF/88, Art. 44, parágrafo único"
+      },
+      {
+        poder: "Executivo",
+        pergunta: "Quem chefia o Poder Executivo federal?",
+        alternativas: ["O Presidente do Senado", "O Presidente do STF", "O Presidente da República", "O Ministro da Justiça"],
+        correta: 2,
+        explicacao: "O Presidente da República exerce o Executivo, auxiliado pelos Ministros de Estado.",
+        fonte: "CF/88, Art. 76"
+      },
+      {
+        poder: "Executivo",
+        pergunta: "Nos estados, quem exerce o Poder Executivo?",
+        alternativas: ["Prefeito", "Governador", "Deputado estadual", "Desembargador"],
+        correta: 1,
+        explicacao: "Nos estados é o Governador. Nos municípios, o Prefeito.",
+        fonte: "CF/88, Arts. 28 e 29"
+      },
+      {
+        poder: "Executivo",
+        pergunta: "O que é o veto presidencial?",
+        alternativas: ["A anulação de uma decisão judicial", "A recusa do Presidente em sancionar, total ou parcialmente, um projeto de lei", "A dissolução do Congresso", "A nomeação de ministros"],
+        correta: 1,
+        explicacao: "O Congresso pode derrubar o veto por maioria absoluta. É um exemplo de freios e contrapesos.",
+        fonte: "CF/88, Art. 66"
+      },
+      {
+        poder: "Executivo",
+        pergunta: "Qual instrumento permite ao Presidente editar normas com força de lei em casos de relevância e urgência?",
+        alternativas: ["Decreto legislativo", "Emenda constitucional", "Medida provisória", "Súmula vinculante"],
+        correta: 2,
+        explicacao: "A medida provisória tem força de lei, mas precisa ser aprovada pelo Congresso para continuar valendo.",
+        fonte: "CF/88, Art. 62"
+      },
+      {
+        poder: "Judiciário",
+        pergunta: "Qual é o órgão máximo do Poder Judiciário brasileiro?",
+        alternativas: ["STJ", "TSE", "STF", "TST"],
+        correta: 2,
+        explicacao: "O Supremo Tribunal Federal é o guardião da Constituição.",
+        fonte: "CF/88, Art. 102"
+      },
+      {
+        poder: "Judiciário",
+        pergunta: "Quantos ministros compõem o STF?",
+        alternativas: ["9", "11", "13", "15"],
+        correta: 1,
+        explicacao: "São 11 ministros, indicados pelo Presidente e aprovados pela maioria absoluta do Senado.",
+        fonte: "CF/88, Art. 101"
+      },
+      {
+        poder: "Judiciário",
+        pergunta: "Qual tribunal organiza as eleições no Brasil?",
+        alternativas: ["STF", "STJ", "TSE", "TCU"],
+        correta: 2,
+        explicacao: "O Tribunal Superior Eleitoral organiza e fiscaliza as eleições em todo o país.",
+        fonte: "CF/88, Arts. 118 a 121"
+      },
+      {
+        poder: "Geral",
+        pergunta: "O que significa o sistema de freios e contrapesos?",
+        alternativas: ["Um poder é superior aos outros", "Os poderes se controlam mutuamente para evitar abusos", "Apenas o Judiciário pode controlar os outros", "Os poderes não se relacionam entre si"],
+        correta: 1,
+        explicacao: "Cada poder limita os outros: o Presidente veta leis, o Congresso derruba vetos e o STF declara leis inconstitucionais.",
+        fonte: "CF/88, Art. 2º"
+      },
+      {
+        poder: "Geral",
+        pergunta: "Quem julga o Presidente da República num processo de impeachment por crime de responsabilidade?",
+        alternativas: ["STF", "Câmara dos Deputados", "Senado Federal", "TSE"],
+        correta: 2,
+        explicacao: "A Câmara autoriza a abertura do processo por 2/3 dos votos, e o Senado julga, sob a presidência do presidente do STF.",
+        fonte: "CF/88, Arts. 51, 52 e 86"
+      }
+    ];
+
+
+    /* =========================================================
+       2. ESTADO E ATALHOS
+       ========================================================= */
+    const $ = id => document.getElementById(id);
+
+    const telas = {
+      inicio:    $("tela-inicio"),
+      pergunta:  $("tela-pergunta"),
+      resultado: $("tela-resultado")
+    };
+
+    const LETRAS   = "ABCD";
+    const reduzido = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    let participante = null;   // { nome, sobrenome, idade, curso }
+    let ordem = [];            // perguntas embaralhadas
+    let atual = 0;             // índice da pergunta atual
+    let respostas = [];        // true = acertou, false = errou
+
+
+    /* =========================================================
+       3. FUNÇÕES AUXILIARES
+       ========================================================= */
+    function mostrar(nome) {
+      for (const k in telas) telas[k].hidden = k !== nome;
+      reanimar(telas[nome].classList.contains("cena") ? telas[nome] : null);
+    }
+
+    function reanimar(el) {
+      if (!el) return;
+      el.style.animation = "none";
+      void el.offsetWidth;
+      el.style.animation = "";
+    }
+
+    function embaralhar(lista) {
+      const c = [...lista];
+      for (let i = c.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [c[i], c[j]] = [c[j], c[i]];
+      }
+      return c;
+    }
+
+    function atualizarProgresso(feitas) {
+      const pct = Math.round(feitas / ordem.length * 100);
+      $("barra").style.width = pct + "%";
+      $("prog-txt").textContent = `${feitas}/${ordem.length} · ${pct}%`;
+    }
+
+    function rolarParaQuiz() {
+      $("quiz").scrollIntoView({ behavior: reduzido ? "auto" : "smooth", block: "start" });
+    }
+
+    // Efeito "ripple" ao clicar nos botões
+    function efeitoRipple(e) {
+      const alvo = e.target.closest(".btn, .alt");
+      if (!alvo || alvo.disabled || reduzido) return;
+      const r = alvo.getBoundingClientRect();
+      const d = Math.max(r.width, r.height) * 2.2;
+      const s = document.createElement("span");
+      s.className = "ripple";
+      s.style.cssText = `width:${d}px;height:${d}px;left:${e.clientX - r.left - d / 2}px;top:${e.clientY - r.top - d / 2}px`;
+      alvo.appendChild(s);
+      setTimeout(() => s.remove(), 650);
+    }
+
+
+    /* =========================================================
+       4. POPUP DE CADASTRO
+       ========================================================= */
+    const CAMPOS = ["nome", "sobrenome", "idade", "curso"];
+
+    function validarCampo(id) {
+      const input = $(id);
+      const valor = input.value.trim();
+      let erro = "";
+
+      if (!valor) {
+        erro = "Campo obrigatório.";
+      } else if (id === "idade") {
+        const n = Number(valor);
+        if (!Number.isInteger(n) || n < 1 || n > 120) erro = "Informe uma idade válida.";
+      } else if (valor.length < 2) {
+        erro = "Digite pelo menos 2 caracteres.";
+      }
+
+      $("erro-" + id).textContent = erro;
+      input.classList.toggle("invalido", !!erro);
+      input.setAttribute("aria-invalid", !!erro);
+      return !erro;
+    }
+
+    function enviarCadastro(e) {
+      e.preventDefault();
+
+      const resultados = CAMPOS.map(validarCampo);
+      const primeiroInvalido = CAMPOS.find((id, i) => !resultados[i]);
+      if (primeiroInvalido) {
+        $(primeiroInvalido).focus();
+        return;
+      }
+
+      participante = {
+        nome:      $("nome").value.trim(),
+        sobrenome: $("sobrenome").value.trim(),
+        idade:     Number($("idade").value),
+        curso:     $("curso").value.trim()
+      };
+
+      fecharCadastro();
+    }
+
+    function fecharCadastro() {
+      $("modal-cadastro").hidden = true;
+      document.body.classList.remove("travado");
+      $("saudacao").textContent = `Olá, ${participante.nome}! Pronto para testar seus conhecimentos?`;
+    }
+
+    // Impede que a tecla Tab saia do popup enquanto ele estiver aberto
+    function prenderFoco(e) {
+      if (e.key !== "Tab" || $("modal-cadastro").hidden) return;
+      const focaveis = $("modal-cadastro").querySelectorAll("input, button");
+      const primeiro = focaveis[0];
+      const ultimo   = focaveis[focaveis.length - 1];
+      if (e.shiftKey && document.activeElement === primeiro) { e.preventDefault(); ultimo.focus(); }
+      else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primeiro.focus(); }
+    }
+
+
+    /* =========================================================
+       5. QUIZ
+       ========================================================= */
+    function iniciar() {
+      if (!participante) return;   // segurança: só joga quem se cadastrou
+      ordem = embaralhar(perguntas);
+      atual = 0;
+      respostas = [];
+      atualizarProgresso(0);
+      mostrar("pergunta");
+      renderPergunta();
+      rolarParaQuiz();
+    }
+
+    function renderPergunta() {
+      const p = ordem[atual];
+
+      // Número com animação
+      const num = $("num");
+      num.textContent = atual + 1;
+      num.classList.remove("pop");
+      void num.offsetWidth;
+      num.classList.add("pop");
+
+      // Cabeçalho
+      $("quiz-titulo").textContent = `Pergunta ${atual + 1}`;
+      $("quiz-sub").textContent = `de ${ordem.length} · ${p.poder}`;
+
+      const tag = $("tag-poder");
+      tag.textContent = p.poder;
+      tag.className = "chip " + PODERES[p.poder];
+
+      // Enunciado
+      $("status").textContent = "Aguardando resposta";
+      $("pergunta").textContent = p.pergunta;
+      $("feedback").hidden = true;
+      $("btn-proxima").hidden = true;
+
+      // Alternativas
+      const box = $("alternativas");
+      box.innerHTML = "";
+      p.alternativas.forEach((txt, i) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "alt";
+        b.innerHTML = `<span class="letra">${LETRAS[i]}</span><span></span>`;
+        b.lastChild.textContent = txt;
+        b.addEventListener("click", () => responder(i));
+        box.appendChild(b);
+      });
+
+      reanimar($("cena"));
+      if (atual > 0 && innerWidth < 700) rolarParaQuiz();
+    }
+
+    function responder(i) {
+      const p = ordem[atual];
+      const botoes = [...$("alternativas").children];
+      const certo = i === p.correta;
+
+      // Marca certa / errada
+      botoes.forEach((b, k) => {
+        b.disabled = true;
+        if (k !== p.correta && k !== i) b.classList.add("apagada");
+      });
+      botoes[p.correta].classList.add("certa");
+      if (!certo) botoes[i].classList.add("errada");
+
+      respostas[atual] = certo;
+      try { navigator.vibrate && navigator.vibrate(certo ? 25 : [40, 60, 40]); } catch (e) {}
+
+      // Explicação
+      $("status").textContent = certo ? "Acertou" : "Errou";
+      const exp = $("explicacao");
+      exp.innerHTML = `<strong class="${certo ? "ok" : "bad"}">${certo ? "Correto." : "Errado."}</strong> `;
+      exp.append(p.explicacao);
+      $("fonte").textContent = p.fonte;
+      $("feedback").hidden = false;
+
+      atualizarProgresso(atual + 1);
+
+      // Botão para avançar (sempre manual)
+      const btn = $("btn-proxima");
+      btn.textContent = atual === ordem.length - 1 ? "Ver resultado" : "Próxima →";
+      btn.hidden = false;
+      btn.focus({ preventScroll: true });
+    }
+
+    function proxima() {
+      atual++;
+      if (atual < ordem.length) renderPergunta();
+      else resultado();
+    }
+
+
+    /* =========================================================
+       6. RESULTADO
+       ========================================================= */
+    function contar(el, ate) {
+      if (reduzido) { el.textContent = ate; return; }
+      const t0 = performance.now(), dur = 900;
+      (function passo(t) {
+        const k = Math.min(1, (t - t0) / dur);
+        el.textContent = Math.round(ate * (1 - Math.pow(1 - k, 3)));
+        if (k < 1) requestAnimationFrame(passo);
+      })(t0);
+    }
+
+    function mensagemFinal(pct) {
+      const nome = participante.nome;
+      if (pct === 1)  return `Gabaritou, ${nome}! Você domina a organização dos Poderes.`;
+      if (pct >= .7)  return `Muito bem, ${nome}. Você conhece bem o assunto.`;
+      if (pct >= .4)  return `Bom começo, ${nome}. Vale revisar os pontos que errou.`;
+      return `${nome}, releia a seção sobre os Poderes e tente de novo.`;
+    }
+
+    function resultado() {
+      const acertos = respostas.filter(Boolean).length;
+      const total   = ordem.length;
+      const pct     = acertos / total;
+
+      $("num").textContent = "✓";
+      $("quiz-titulo").textContent = "Quiz concluído";
+      $("quiz-sub").textContent = `${acertos} de ${total} acertos`;
+      $("total").textContent = total;
+
+      // Dados do participante
+      const info = $("participante");
+      info.innerHTML = "<b></b> · <span></span> · <span></span>";
+      info.children[0].textContent = `${participante.nome} ${participante.sobrenome}`;
+      info.children[1].textContent = participante.curso;
+      info.children[2].textContent = `${participante.idade} anos`;
+
+      $("mensagem").textContent = mensagemFinal(pct);
+
+      // Desempenho por poder
+      $("por-poder").innerHTML = Object.keys(PODERES).map(nome => {
+        const idx = ordem.map((p, i) => p.poder === nome ? i : -1).filter(i => i >= 0);
+        const ok = idx.filter(i => respostas[i]).length;
+        const t  = idx.length;
+        return `
+          <div class="linha">
+            <span class="chip ${PODERES[nome]}" style="justify-self:start">${nome}</span>
+            <span class="barra"><i data-w="${t ? ok / t * 100 : 0}"></i></span>
+            <span class="n">${ok}/${t}</span>
+          </div>`;
+      }).join("");
+
+      mostrar("resultado");
+      contar($("acertos"), acertos);
+      requestAnimationFrame(() => requestAnimationFrame(() =>
+        document.querySelectorAll(".linha .barra i").forEach(i => i.style.width = i.dataset.w + "%")
+      ));
+    }
+
+
+    /* =========================================================
+       7. INICIALIZAÇÃO E EVENTOS
+       ========================================================= */
+    $("quiz-sub").textContent = `${perguntas.length} perguntas · múltipla escolha`;
+    $("prog-txt").textContent = `0/${perguntas.length} · 0%`;
+
+    // Popup
+    $("form-cadastro").addEventListener("submit", enviarCadastro);
+    CAMPOS.forEach(id => $(id).addEventListener("input", () => {
+      if ($(id).classList.contains("invalido")) validarCampo(id);
+    }));
+    document.addEventListener("keydown", prenderFoco);
+    $("nome").focus();
+
+    // Quiz
+    document.addEventListener("pointerdown", efeitoRipple);
+    $("btn-iniciar").addEventListener("click", iniciar);
+    $("btn-reiniciar").addEventListener("click", iniciar);
+    $("btn-proxima").addEventListener("click", proxima);
+  </script>
 </body>
 </html>

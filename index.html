@@ -1822,32 +1822,51 @@
       return ordenarRanking(json.ranking);
     }
 
-    async function carregarRanking() {
+    const ATUALIZAR_A_CADA = 10;   // segundos entre cada atualização automática do ranking
+    let ultimaListaDesenhada = "";
+
+    // silencioso = atualização automática: não mostra "Carregando…" nem apaga a lista se falhar
+    async function carregarRanking(silencioso = false) {
       const status = $("ranking-status");
-      status.hidden = false;
-      status.textContent = "Carregando ranking…";
+      if (!silencioso) {
+        status.hidden = false;
+        status.textContent = "Carregando ranking…";
+        ultimaListaDesenhada = "";   // clique em Atualizar sempre redesenha
+      }
       try {
         ranking = await buscarRanking();
         renderRanking();
       } catch (e) {
-        status.textContent = "Não foi possível carregar o ranking. Verifique a internet e clique em Atualizar.";
+        if (!silencioso) status.textContent = "Não foi possível carregar o ranking. Verifique a internet e clique em Atualizar.";
       }
     }
 
     function renderRanking() {
       const lista  = $("lista-ranking");
       const status = $("ranking-status");
-      lista.innerHTML = "";
 
       if (!ranking.length) {
+        lista.innerHTML = "";
+        ultimaListaDesenhada = "";
+        status.hidden = false;
         status.textContent = "Ninguém jogou ainda. Seja o primeiro!";
         return;
       }
 
-      status.textContent = URL_PLANILHA ? "" : "Modo de teste: o ranking está salvo só neste navegador.";
-      status.hidden = !status.textContent;
+      const agora = new Date().toLocaleTimeString("pt-BR");
+      status.textContent = URL_PLANILHA
+        ? `Atualiza sozinho a cada ${ATUALIZAR_A_CADA} segundos · última atualização às ${agora}`
+        : "Modo de teste: o ranking está salvo só neste navegador.";
+      status.hidden = false;
 
-      ranking.slice(0, 20).forEach((r, i) => {
+      // Só redesenha se algo mudou (evita a lista "piscar" a cada 10 segundos)
+      const top = ranking.slice(0, 20);
+      const assinatura = JSON.stringify(top.map(r => [r.id, r.pontos, r.tempo])) + ultimoId;
+      if (assinatura === ultimaListaDesenhada) return;
+      ultimaListaDesenhada = assinatura;
+      lista.innerHTML = "";
+
+      top.forEach((r, i) => {
         const pos = i + 1;
         const li = document.createElement("li");
         li.className = "item-ranking" + (r.id === ultimoId ? " voce" : "");
@@ -1906,8 +1925,13 @@
     // Resultado e ranking
     $("btn-revisar").addEventListener("click", alternarRevisao);
     $("btn-novo").addEventListener("click", abrirCadastro);
-    $("btn-atualizar-ranking").addEventListener("click", carregarRanking);
+    $("btn-atualizar-ranking").addEventListener("click", () => carregarRanking());
     carregarRanking();
+
+    // Atualização automática do ranking (só com a planilha ligada e com a aba visível)
+    setInterval(() => {
+      if (URL_PLANILHA && !document.hidden) carregarRanking(true);
+    }, ATUALIZAR_A_CADA * 1000);
   </script>
 </body>
 </html>

@@ -352,8 +352,10 @@
 
     /* Resultado */
     .resultado { display: grid; gap: 20px; }
-    .participante { color: var(--muted); font-size: .92rem; }
-    .participante b { color: var(--ink); }
+    .participante { display: flex; align-items: center; gap: 14px; }
+    .participante b { display: block; color: var(--ink); font-size: 1.05rem; }
+    .participante div span { display: block; color: var(--muted); font-size: .88rem; }
+    .participante .posicao { color: var(--ink); font-weight: 600; }
     .placar { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
     .placar b { font-family: var(--font-display); font-size: clamp(3.4rem, 9vw, 5rem); color: var(--ink); line-height: 1; font-variant-numeric: tabular-nums; }
     .placar span { color: var(--muted); font-size: 1.1rem; }
@@ -366,6 +368,25 @@
     .linha .n { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
 
     .acoes-fim { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    /* Revisão das questões erradas */
+    .revisao { display: grid; gap: 12px; border-top: 1px solid var(--line); padding-top: 20px; scroll-margin-top: 80px; }
+    .revisao h3 { font-size: 1.3rem; }
+    .lista-revisao { display: grid; gap: 12px; }
+    .item-revisao {
+      display: grid; gap: 8px;
+      padding: 16px;
+      border: 1px solid var(--line); border-radius: 14px;
+      animation: abrir .4s var(--ease) both;
+    }
+    .item-revisao .enunciado { font-family: var(--font-display); font-weight: 700; font-size: 1.08rem; line-height: 1.35; color: var(--ink); }
+    .resp { display: flex; gap: 8px; align-items: baseline; padding: 8px 10px; border-radius: 8px; font-size: .92rem; }
+    .resp b { flex: none; }
+    .resp span { color: var(--text); }
+    .resp.sua   { background: var(--bad-bg); color: var(--bad); }
+    .resp.certa { background: var(--ok-bg);  color: var(--ok); }
+    .item-revisao .explica { font-size: .92rem; }
+    .item-revisao .fonte { font-size: .8rem; color: var(--muted); }
 
     /* =========================================================
        11. POPUP DE CADASTRO
@@ -392,7 +413,7 @@
     .campos { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     .campo { display: grid; gap: 6px; min-width: 0; }
     .campo.inteiro { grid-column: 1 / -1; }
-    .campo label { font-size: .85rem; font-weight: 600; color: var(--ink); }
+    .campo label, .campo .rotulo { font-size: .85rem; font-weight: 600; color: var(--ink); }
     .campo label .obrig { color: var(--bad); }
     .campo input {
       width: 100%; padding: 11px 13px;
@@ -408,14 +429,75 @@
     .modal .btn-dark { width: 100%; margin-top: 20px; padding-block: 14px; }
     .modal .aviso { margin-top: 12px; text-align: center; font-size: .78rem; color: var(--muted); }
 
+    /* Escolha do avatar */
+    .escolha-avatar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .campo .opcao-avatar {
+      position: relative;
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 12px;
+      border: 1px solid var(--line-strong); border-radius: 12px;
+      font-weight: 500; color: var(--text);
+      cursor: pointer;
+      transition: border-color .18s, background .18s, box-shadow .18s;
+    }
+    .opcao-avatar input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+    .opcao-avatar:hover { border-color: var(--ink); }
+    .opcao-avatar:has(input:checked) { border-color: var(--ink); background: var(--soft); box-shadow: inset 0 0 0 1px var(--ink); }
+    .opcao-avatar:has(input:focus-visible) { outline: 2px solid var(--ink); outline-offset: 2px; }
+    .escolha-avatar.invalido .opcao-avatar { border-color: var(--bad); background: var(--bad-bg); }
+
     /* =========================================================
-       12. RODAPÉ
+       12. AVATARES
+       Mesmo desenho para todos; a cor do fundo muda conforme
+       a posição no ranking.
+       ========================================================= */
+    .avatar {
+      --av-bg: var(--soft);
+      flex: none; display: block;
+      width: 44px; height: 44px; border-radius: 50%; overflow: hidden;
+      background: var(--av-bg);
+    }
+    .avatar svg { display: block; width: 100%; height: 100%; }
+    .avatar.grande { width: 64px; height: 64px; }
+    .avatar.pos-1 { --av-bg: #f3d470; }  /* 1º lugar: ouro   */
+    .avatar.pos-2 { --av-bg: #d9dfe7; }  /* 2º lugar: prata  */
+    .avatar.pos-3 { --av-bg: #e6b48c; }  /* 3º lugar: bronze */
+    .avatar.pos-n { --av-bg: #dfe8f3; }  /* demais posições  */
+
+    /* =========================================================
+       13. RANKING
+       ========================================================= */
+    .ranking { padding: 26px 30px 30px; scroll-margin-top: 80px; }
+    .ranking-topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+    .ranking-topo h2 { font-size: clamp(1.35rem, 2.6vw, 1.7rem); margin-top: 4px; }
+    .ranking-topo .sub { color: var(--muted); font-size: .88rem; margin-top: 4px; }
+    .ranking-status { color: var(--muted); font-size: .92rem; margin-bottom: 10px; }
+
+    .lista-ranking { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+    .item-ranking {
+      display: grid; grid-template-columns: 40px 44px 1fr auto; gap: 14px; align-items: center;
+      padding: 10px 14px;
+      border: 1px solid var(--line); border-radius: 14px;
+      animation: entrar .4s var(--ease) both;
+    }
+    .item-ranking.voce { border-color: var(--ink); background: var(--soft); }
+    .item-ranking .pos { text-align: center; font-family: var(--font-display); font-weight: 800; font-size: 1.25rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+    .item-ranking .quem { min-width: 0; }
+    .item-ranking .quem b, .item-ranking .quem span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .item-ranking .quem b { color: var(--ink); }
+    .item-ranking .quem span { font-size: .82rem; color: var(--muted); }
+    .item-ranking .pontos { text-align: right; font-variant-numeric: tabular-nums; }
+    .item-ranking .pontos b { display: block; color: var(--ink); font-size: 1.05rem; }
+    .item-ranking .pontos span { font-size: .78rem; color: var(--muted); }
+
+    /* =========================================================
+       14. RODAPÉ
        ========================================================= */
     .rodape { padding-block: 8px 36px; color: var(--muted); font-size: .85rem; }
     .rodape .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 
     /* =========================================================
-       13. RESPONSIVO
+       15. RESPONSIVO
        ========================================================= */
     @media (max-width: 860px) {
       .hero { grid-template-columns: 1fr; }
@@ -496,6 +578,13 @@
       .modal { padding: 24px 20px 20px; border-radius: 18px; }
       .campos { grid-template-columns: 1fr; }
 
+      /* Ranking */
+      .ranking { padding: 20px 18px 22px; }
+      .ranking-topo .btn { width: 100%; }
+      .item-ranking { grid-template-columns: 28px 40px 1fr auto; gap: 10px; padding: 10px; }
+      .item-ranking .avatar { width: 40px; height: 40px; }
+      .item-ranking .pos { font-size: 1.05rem; }
+
       /* Rodapé */
       .rodape .wrap { justify-content: center; text-align: center; }
     }
@@ -555,6 +644,23 @@
             <input type="text" id="curso" name="curso" placeholder="Ex.: Direito" required>
             <span class="erro" id="erro-curso"></span>
           </div>
+
+          <div class="campo inteiro">
+            <span class="rotulo" id="rotulo-avatar">Avatar <span class="obrig">*</span></span>
+            <div class="escolha-avatar" id="escolha-avatar" role="radiogroup" aria-labelledby="rotulo-avatar">
+              <label class="opcao-avatar">
+                <input type="radio" name="avatar" value="m">
+                <span class="avatar" data-avatar="m"></span>
+                Masculino
+              </label>
+              <label class="opcao-avatar">
+                <input type="radio" name="avatar" value="f">
+                <span class="avatar" data-avatar="f"></span>
+                Feminino
+              </label>
+            </div>
+            <span class="erro" id="erro-avatar"></span>
+          </div>
         </div>
 
         <button class="btn btn-dark" type="submit">Continuar</button>
@@ -581,6 +687,7 @@
       <nav>
         <a class="link" href="#artigo">Constituição</a>
         <a class="link" href="#poderes">Os Poderes</a>
+        <a class="link" href="#ranking">Ranking</a>
         <a class="btn btn-dark" href="#quiz">Fazer o quiz</a>
       </nav>
     </div>
@@ -721,17 +828,46 @@
         <!-- Tela de resultado -->
         <div class="resultado" id="tela-resultado" hidden>
           <span class="eyebrow">Resultado</span>
-          <p class="participante" id="participante"></p>
+          <div class="participante">
+            <span class="avatar grande" id="avatar-resultado"></span>
+            <div>
+              <b id="participante-nome"></b>
+              <span id="participante-info"></span>
+              <span class="posicao" id="posicao"></span>
+            </div>
+          </div>
           <div class="placar"><b id="acertos">0</b><span>de <span id="total">15</span> acertos</span></div>
           <p class="veredito" id="mensagem"></p>
           <div class="por-poder" id="por-poder"></div>
           <div class="acoes-fim">
-            <button class="btn btn-dark" id="btn-reiniciar" type="button">Jogar de novo</button>
-            <a class="btn" href="#poderes">Revisar os Poderes</a>
+            <button class="btn btn-dark" id="btn-revisar" type="button">Revisar erros</button>
+            <button class="btn" id="btn-reiniciar" type="button">Jogar de novo</button>
+            <a class="btn" href="#ranking">Ver ranking</a>
+            <button class="btn" id="btn-novo" type="button">Novo participante</button>
+          </div>
+
+          <!-- Revisão das questões erradas -->
+          <div class="revisao" id="revisao" hidden>
+            <h3>Questões que você errou</h3>
+            <div class="lista-revisao" id="lista-revisao"></div>
           </div>
         </div>
 
       </div>
+    </section>
+
+    <!-- ===================== RANKING ===================== -->
+    <section class="painel ranking" id="ranking">
+      <div class="ranking-topo">
+        <div>
+          <span class="eyebrow">Classificação geral</span>
+          <h2>Ranking</h2>
+          <p class="sub">Quem acertou mais fica em cima. No empate, vence quem terminou mais rápido.</p>
+        </div>
+        <button class="btn" id="btn-atualizar-ranking" type="button">Atualizar</button>
+      </div>
+      <p class="ranking-status" id="ranking-status">Carregando ranking…</p>
+      <ol class="lista-ranking" id="lista-ranking"></ol>
     </section>
   </main>
 
@@ -747,6 +883,15 @@
 
 
   <script>
+    /* =========================================================
+       0. CONFIGURAÇÃO
+       Cole abaixo o link do Google Apps Script (termina em /exec).
+       Enquanto estiver vazio, o ranking fica salvo só neste
+       navegador (modo de teste).
+       ========================================================= */
+    const URL_PLANILHA = "";
+
+
     /* =========================================================
        1. DADOS DO QUIZ
        Para adicionar perguntas: copie um bloco e altere.
@@ -897,10 +1042,13 @@
     const LETRAS   = "ABCD";
     const reduzido = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    let participante = null;   // { nome, sobrenome, idade, curso }
+    let participante = null;   // { nome, sobrenome, idade, curso, avatar }
     let ordem = [];            // perguntas embaralhadas
     let atual = 0;             // índice da pergunta atual
-    let respostas = [];        // true = acertou, false = errou
+    let respostas = [];        // alternativa escolhida em cada pergunta
+    let inicioQuiz = 0;        // horário em que o quiz começou (ms)
+    let ranking = [];          // lista já ordenada do ranking
+    let ultimoId = null;       // id do último resultado salvo (para destacar)
 
 
     /* =========================================================
@@ -933,8 +1081,23 @@
       $("prog-txt").textContent = `${feitas}/${ordem.length} · ${pct}%`;
     }
 
+    function rolarPara(el) {
+      el.scrollIntoView({ behavior: reduzido ? "auto" : "smooth", block: "start" });
+    }
+
     function rolarParaQuiz() {
-      $("quiz").scrollIntoView({ behavior: reduzido ? "auto" : "smooth", block: "start" });
+      rolarPara($("quiz"));
+    }
+
+    function formatarTempo(segundos) {
+      const s = Math.max(0, Math.round(Number(segundos) || 0));
+      return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+    }
+
+    function gerarId() {
+      return window.crypto && crypto.randomUUID
+        ? crypto.randomUUID()
+        : Date.now().toString(36) + Math.random().toString(36).slice(2);
     }
 
     // Efeito "ripple" ao clicar nos botões
@@ -952,11 +1115,61 @@
 
 
     /* =========================================================
-       4. POPUP DE CADASTRO
+       4. AVATARES
+       Desenho padrão masculino e feminino. A cor do fundo vem
+       do CSS (.pos-1, .pos-2, .pos-3, .pos-n) conforme a posição.
        ========================================================= */
-    const CAMPOS = ["nome", "sobrenome", "idade", "curso"];
+    const AVATARES = {
+      m: `<svg viewBox="0 0 64 64" aria-hidden="true">
+            <path d="M12 64 C12 50 21 43 32 43 C43 43 52 50 52 64Z" fill="#3d4f66"/>
+            <rect x="28" y="35" width="8" height="10" rx="3" fill="#e2b994"/>
+            <circle cx="32" cy="26" r="11" fill="#f0cfb0"/>
+            <path d="M21 25 C20 15 26 12 32 12 C39 12 44 15 43 25 C41 20 36 18 32 18 C27 18 23 20 21 25Z" fill="#2e2a27"/>
+          </svg>`,
+      f: `<svg viewBox="0 0 64 64" aria-hidden="true">
+            <path d="M18 42 C16 28 19 13 32 13 C45 13 48 28 46 42 C41 46 23 46 18 42Z" fill="#5a3a2a"/>
+            <path d="M13 64 C13 51 21 44 32 44 C43 44 51 51 51 64Z" fill="#a0526b"/>
+            <rect x="28" y="35" width="8" height="10" rx="3" fill="#e2b994"/>
+            <circle cx="32" cy="26" r="11" fill="#f0cfb0"/>
+            <path d="M21 26 C21 17 26 14 32 14 C38 14 43 17 43 26 C39 21 33 19 27 22 C24 23 22 24 21 26Z" fill="#5a3a2a"/>
+          </svg>`
+    };
+
+    function classePosicao(pos) {
+      if (!pos) return "";
+      return pos <= 3 ? "pos-" + pos : "pos-n";
+    }
+
+    // Devolve o HTML de um avatar (usado na lista do ranking)
+    function avatarHTML(tipo, pos) {
+      return `<span class="avatar ${classePosicao(pos)}">${AVATARES[tipo === "f" ? "f" : "m"]}</span>`;
+    }
+
+    // Pinta um avatar que já existe na página (usado no resultado)
+    function pintarAvatar(el, tipo, pos) {
+      el.className = `avatar grande ${classePosicao(pos)}`;
+      el.innerHTML = AVATARES[tipo === "f" ? "f" : "m"];
+    }
+
+
+    /* =========================================================
+       5. POPUP DE CADASTRO
+       ========================================================= */
+    const CAMPOS = ["nome", "sobrenome", "idade", "curso", "avatar"];
+
+    function avatarEscolhido() {
+      const marcado = document.querySelector('input[name="avatar"]:checked');
+      return marcado ? marcado.value : "";
+    }
 
     function validarCampo(id) {
+      if (id === "avatar") {
+        const ok = !!avatarEscolhido();
+        $("erro-avatar").textContent = ok ? "" : "Escolha um avatar.";
+        $("escolha-avatar").classList.toggle("invalido", !ok);
+        return ok;
+      }
+
       const input = $(id);
       const valor = input.value.trim();
       let erro = "";
@@ -982,7 +1195,10 @@
       const resultados = CAMPOS.map(validarCampo);
       const primeiroInvalido = CAMPOS.find((id, i) => !resultados[i]);
       if (primeiroInvalido) {
-        $(primeiroInvalido).focus();
+        const alvo = primeiroInvalido === "avatar"
+          ? document.querySelector('input[name="avatar"]')
+          : $(primeiroInvalido);
+        alvo.focus();
         return;
       }
 
@@ -990,7 +1206,8 @@
         nome:      $("nome").value.trim(),
         sobrenome: $("sobrenome").value.trim(),
         idade:     Number($("idade").value),
-        curso:     $("curso").value.trim()
+        curso:     $("curso").value.trim(),
+        avatar:    avatarEscolhido()
       };
 
       fecharCadastro();
@@ -1000,6 +1217,29 @@
       $("modal-cadastro").hidden = true;
       document.body.classList.remove("travado");
       $("saudacao").textContent = `Olá, ${participante.nome}! Pronto para testar seus conhecimentos?`;
+    }
+
+    // "Novo participante": limpa tudo e reabre o popup
+    function abrirCadastro() {
+      participante = null;
+      $("form-cadastro").reset();
+      CAMPOS.forEach(id => {
+        $("erro-" + id).textContent = "";
+        if (id !== "avatar") $(id).classList.remove("invalido");
+      });
+      $("escolha-avatar").classList.remove("invalido");
+
+      // Volta o quiz para a tela inicial
+      $("num").textContent = "?";
+      $("quiz-titulo").textContent = "Quiz dos Três Poderes";
+      $("quiz-sub").textContent = `${perguntas.length} perguntas · múltipla escolha`;
+      $("barra").style.width = "0%";
+      $("prog-txt").textContent = `0/${perguntas.length} · 0%`;
+      mostrar("inicio");
+
+      $("modal-cadastro").hidden = false;
+      document.body.classList.add("travado");
+      $("nome").focus();
     }
 
     // Impede que a tecla Tab saia do popup enquanto ele estiver aberto
@@ -1014,13 +1254,15 @@
 
 
     /* =========================================================
-       5. QUIZ
+       6. QUIZ
        ========================================================= */
     function iniciar() {
       if (!participante) return;   // segurança: só joga quem se cadastrou
       ordem = embaralhar(perguntas);
       atual = 0;
       respostas = [];
+      inicioQuiz = Date.now();
+      $("revisao").hidden = true;
       atualizarProgresso(0);
       mostrar("pergunta");
       renderPergunta();
@@ -1081,7 +1323,7 @@
       botoes[p.correta].classList.add("certa");
       if (!certo) botoes[i].classList.add("errada");
 
-      respostas[atual] = certo;
+      respostas[atual] = i;   // guarda a alternativa escolhida (usada na revisão)
       try { navigator.vibrate && navigator.vibrate(certo ? 25 : [40, 60, 40]); } catch (e) {}
 
       // Explicação
@@ -1129,10 +1371,16 @@
       return `${nome}, releia a seção sobre os Poderes e tente de novo.`;
     }
 
+    function acertou(i) {
+      return respostas[i] === ordem[i].correta;
+    }
+
     function resultado() {
-      const acertos = respostas.filter(Boolean).length;
       const total   = ordem.length;
+      const acertos = ordem.filter((p, i) => acertou(i)).length;
+      const erros   = total - acertos;
       const pct     = acertos / total;
+      const tempo   = Math.round((Date.now() - inicioQuiz) / 1000);
 
       $("num").textContent = "✓";
       $("quiz-titulo").textContent = "Quiz concluído";
@@ -1140,19 +1388,20 @@
       $("total").textContent = total;
 
       // Dados do participante
-      const info = $("participante");
-      info.innerHTML = "<b></b> · <span></span> · <span></span>";
-      info.children[0].textContent = `${participante.nome} ${participante.sobrenome}`;
-      info.children[1].textContent = participante.curso;
-      info.children[2].textContent = `${participante.idade} anos`;
-
+      pintarAvatar($("avatar-resultado"), participante.avatar);
+      $("participante-nome").textContent = `${participante.nome} ${participante.sobrenome}`;
+      $("participante-info").textContent = `${participante.curso} · ${participante.idade} anos · tempo ${formatarTempo(tempo)}`;
       $("mensagem").textContent = mensagemFinal(pct);
 
       // Desempenho por poder
-      $("por-poder").innerHTML = Object.keys(PODERES).map(nome => {
+      const porPoder = {};
+      Object.keys(PODERES).forEach(nome => {
         const idx = ordem.map((p, i) => p.poder === nome ? i : -1).filter(i => i >= 0);
-        const ok = idx.filter(i => respostas[i]).length;
-        const t  = idx.length;
+        porPoder[nome] = { ok: idx.filter(acertou).length, t: idx.length };
+      });
+
+      $("por-poder").innerHTML = Object.keys(porPoder).map(nome => {
+        const { ok, t } = porPoder[nome];
         return `
           <div class="linha">
             <span class="chip ${PODERES[nome]}" style="justify-self:start">${nome}</span>
@@ -1161,25 +1410,195 @@
           </div>`;
       }).join("");
 
+      // Revisão dos erros
+      renderRevisao();
+      $("revisao").hidden = true;
+      const btnRevisar = $("btn-revisar");
+      btnRevisar.hidden = erros === 0;
+      btnRevisar.dataset.erros = erros;
+      btnRevisar.textContent = `Revisar erros (${erros})`;
+
       mostrar("resultado");
       contar($("acertos"), acertos);
       requestAnimationFrame(() => requestAnimationFrame(() =>
         document.querySelectorAll(".linha .barra i").forEach(i => i.style.width = i.dataset.w + "%")
       ));
+
+      // Envia para o ranking
+      const placarPorPoder = {};
+      for (const nome in porPoder) placarPorPoder[nome] = `${porPoder[nome].ok}/${porPoder[nome].t}`;
+
+      registrarNoRanking({
+        id:        gerarId(),
+        data:      Date.now(),
+        nome:      participante.nome,
+        sobrenome: participante.sobrenome,
+        idade:     participante.idade,
+        curso:     participante.curso,
+        avatar:    participante.avatar,
+        acertos, total, tempo,
+        porPoder:  placarPorPoder
+      });
     }
 
 
     /* =========================================================
-       7. INICIALIZAÇÃO E EVENTOS
+       7. REVISÃO DAS QUESTÕES ERRADAS
+       ========================================================= */
+    function renderRevisao() {
+      const box = $("lista-revisao");
+      box.innerHTML = "";
+
+      ordem.forEach((p, i) => {
+        if (acertou(i)) return;
+        const escolhida = respostas[i];
+
+        const item = document.createElement("article");
+        item.className = "item-revisao";
+        item.innerHTML = `
+          <span class="chip ${PODERES[p.poder]}" style="justify-self:start"></span>
+          <p class="enunciado"></p>
+          <p class="resp sua"><b>Sua resposta:</b> <span></span></p>
+          <p class="resp certa"><b>Correta:</b> <span></span></p>
+          <p class="explica"></p>
+          <span class="fonte"></span>`;
+
+        item.querySelector(".chip").textContent        = p.poder;
+        item.querySelector(".enunciado").textContent   = p.pergunta;
+        item.querySelector(".sua span").textContent    = `${LETRAS[escolhida]}) ${p.alternativas[escolhida]}`;
+        item.querySelector(".certa span").textContent  = `${LETRAS[p.correta]}) ${p.alternativas[p.correta]}`;
+        item.querySelector(".explica").textContent     = p.explicacao;
+        item.querySelector(".fonte").textContent       = p.fonte;
+        box.appendChild(item);
+      });
+    }
+
+    function alternarRevisao() {
+      const revisao = $("revisao");
+      const btn = $("btn-revisar");
+      revisao.hidden = !revisao.hidden;
+      btn.textContent = revisao.hidden ? `Revisar erros (${btn.dataset.erros})` : "Ocultar revisão";
+      if (!revisao.hidden) rolarPara(revisao);
+    }
+
+
+    /* =========================================================
+       8. RANKING
+       Com URL_PLANILHA preenchida, os resultados vão para a
+       planilha no Google Drive. Sem ela, ficam neste navegador.
+       ========================================================= */
+    const CHAVE_LOCAL = "quiz3p-ranking";
+
+    function lerLocal() {
+      try { return JSON.parse(localStorage.getItem(CHAVE_LOCAL)) || []; }
+      catch (e) { return []; }
+    }
+
+    function gravarLocal(lista) {
+      try { localStorage.setItem(CHAVE_LOCAL, JSON.stringify(lista)); } catch (e) {}
+    }
+
+    // Mais acertos primeiro; empate → menor tempo; depois quem jogou antes
+    function ordenarRanking(lista) {
+      return [...lista].sort((a, b) =>
+        b.acertos - a.acertos || a.tempo - b.tempo || a.data - b.data
+      );
+    }
+
+    async function salvarResultado(dados) {
+      if (!URL_PLANILHA) {
+        const lista = lerLocal();
+        lista.push(dados);
+        gravarLocal(lista);
+        return;
+      }
+      // text/plain evita bloqueio de CORS no Google Apps Script
+      const resp = await fetch(URL_PLANILHA, { method: "POST", body: JSON.stringify(dados) });
+      const json = await resp.json();
+      if (!json.ok) throw new Error(json.erro || "Falha ao salvar");
+    }
+
+    async function buscarRanking() {
+      if (!URL_PLANILHA) return ordenarRanking(lerLocal());
+      const resp = await fetch(`${URL_PLANILHA}?t=${Date.now()}`);
+      const json = await resp.json();
+      if (!json.ok) throw new Error(json.erro || "Falha ao carregar");
+      return ordenarRanking(json.ranking);
+    }
+
+    async function carregarRanking() {
+      const status = $("ranking-status");
+      status.hidden = false;
+      status.textContent = "Carregando ranking…";
+      try {
+        ranking = await buscarRanking();
+        renderRanking();
+      } catch (e) {
+        status.textContent = "Não foi possível carregar o ranking. Verifique a internet e clique em Atualizar.";
+      }
+    }
+
+    function renderRanking() {
+      const lista  = $("lista-ranking");
+      const status = $("ranking-status");
+      lista.innerHTML = "";
+
+      if (!ranking.length) {
+        status.textContent = "Ninguém jogou ainda. Seja o primeiro!";
+        return;
+      }
+
+      status.textContent = URL_PLANILHA ? "" : "Modo de teste: o ranking está salvo só neste navegador.";
+      status.hidden = !status.textContent;
+
+      ranking.slice(0, 20).forEach((r, i) => {
+        const pos = i + 1;
+        const li = document.createElement("li");
+        li.className = "item-ranking" + (r.id === ultimoId ? " voce" : "");
+        li.style.animationDelay = Math.min(i, 10) * 0.04 + "s";
+        li.innerHTML = `
+          <span class="pos">${pos}º</span>
+          ${avatarHTML(r.avatar, pos)}
+          <div class="quem"><b></b><span></span></div>
+          <div class="pontos"><b>${Number(r.acertos)}/${Number(r.total)}</b><span>${formatarTempo(r.tempo)}</span></div>`;
+        li.querySelector(".quem b").textContent    = `${r.nome} ${r.sobrenome}`;
+        li.querySelector(".quem span").textContent = r.curso;
+        lista.appendChild(li);
+      });
+    }
+
+    async function registrarNoRanking(dados) {
+      const posicao = $("posicao");
+      posicao.textContent = "Salvando no ranking…";
+      ultimoId = dados.id;
+
+      try {
+        await salvarResultado(dados);
+        await carregarRanking();
+        const lugar = ranking.findIndex(r => r.id === dados.id) + 1;
+        posicao.textContent = lugar ? `${lugar}º lugar no ranking` : "Resultado salvo no ranking";
+        if (lugar) pintarAvatar($("avatar-resultado"), participante.avatar, lugar);
+      } catch (e) {
+        posicao.textContent = "Não foi possível salvar no ranking.";
+      }
+    }
+
+
+    /* =========================================================
+       9. INICIALIZAÇÃO E EVENTOS
        ========================================================= */
     $("quiz-sub").textContent = `${perguntas.length} perguntas · múltipla escolha`;
     $("prog-txt").textContent = `0/${perguntas.length} · 0%`;
+    document.querySelectorAll("[data-avatar]").forEach(el => el.innerHTML = AVATARES[el.dataset.avatar]);
 
     // Popup
     $("form-cadastro").addEventListener("submit", enviarCadastro);
-    CAMPOS.forEach(id => $(id).addEventListener("input", () => {
+    ["nome", "sobrenome", "idade", "curso"].forEach(id => $(id).addEventListener("input", () => {
       if ($(id).classList.contains("invalido")) validarCampo(id);
     }));
+    document.querySelectorAll('input[name="avatar"]').forEach(r =>
+      r.addEventListener("change", () => validarCampo("avatar"))
+    );
     document.addEventListener("keydown", prenderFoco);
     $("nome").focus();
 
@@ -1188,6 +1607,12 @@
     $("btn-iniciar").addEventListener("click", iniciar);
     $("btn-reiniciar").addEventListener("click", iniciar);
     $("btn-proxima").addEventListener("click", proxima);
+
+    // Resultado e ranking
+    $("btn-revisar").addEventListener("click", alternarRevisao);
+    $("btn-novo").addEventListener("click", abrirCadastro);
+    $("btn-atualizar-ranking").addEventListener("click", carregarRanking);
+    carregarRanking();
   </script>
 </body>
 </html>

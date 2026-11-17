@@ -20,8 +20,8 @@
 const ABA = "Resultados";
 const CABECALHO = [
   "Data", "ID", "Nome", "Sobrenome", "Idade", "Curso", "Bonequinho",
-  "Acertos", "Total", "Tempo (s)",
-  "Legislativo", "Executivo", "Judiciário", "Geral"
+  "Pontos", "Acertos", "Total", "Tempo (s)",
+  "Fácil", "Médio", "Difícil"
 ];
 const LIMITE_RANKING = 100;
 
@@ -31,7 +31,7 @@ function doPost(e) {
   trava.waitLock(10000);
   try {
     const d = JSON.parse(e.postData.contents);
-    const porPoder = d.porPoder || {};
+    const porNivel = d.porNivel || {};
 
     aba_().appendRow([
       new Date(),
@@ -41,14 +41,14 @@ function doPost(e) {
       numero_(d.idade, 1, 120),
       texto_(d.curso, 60),
       boneco_(d.avatar),
+      numero_(d.pontos, 0, 1000),
       numero_(d.acertos, 0, 100),
       numero_(d.total, 1, 100),
       numero_(d.tempo, 0, 86400),
       // apóstrofo para o Sheets não transformar "2/4" em data
-      "'" + texto_(porPoder["Legislativo"], 10),
-      "'" + texto_(porPoder["Executivo"], 10),
-      "'" + texto_(porPoder["Judiciário"], 10),
-      "'" + texto_(porPoder["Geral"], 10)
+      "'" + texto_(porNivel["facil"], 10),
+      "'" + texto_(porNivel["medio"], 10),
+      "'" + texto_(porNivel["dificil"], 10)
     ]);
 
     return json_({ ok: true });
@@ -73,11 +73,12 @@ function doGet() {
         sobrenome: String(r[3]),
         curso:     String(r[5]),
         avatar:    boneco_(r[6]),
-        acertos:   Number(r[7]) || 0,
-        total:     Number(r[8]) || 0,
-        tempo:     Number(r[9]) || 0
+        pontos:    Number(r[7]) || 0,
+        acertos:   Number(r[8]) || 0,
+        total:     Number(r[9]) || 0,
+        tempo:     Number(r[10]) || 0
       }))
-      .sort((a, b) => b.acertos - a.acertos || a.tempo - b.tempo || a.data - b.data)
+      .sort((a, b) => b.pontos - a.pontos || a.tempo - b.tempo || a.data - b.data)
       .slice(0, LIMITE_RANKING);
 
     return json_({ ok: true, ranking: ranking });

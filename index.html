@@ -251,6 +251,10 @@
     .chip.exe { background: var(--exe-bg); color: var(--exe-fg); }
     .chip.jud { background: var(--jud-bg); color: var(--jud-fg); }
     .chip.ger { background: var(--ger-bg); color: var(--ger-fg); }
+    /* Níveis de dificuldade */
+    .chip.facil   { background: var(--ok-bg);  color: var(--ok); }
+    .chip.medio   { background: var(--exe-bg); color: var(--exe-fg); }
+    .chip.dificil { background: var(--bad-bg); color: var(--bad); }
     .chip.status { background: var(--soft); color: var(--text); border-radius: 999px; padding: 5px 12px; font-size: .82rem; font-weight: 500; }
     .chip.status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
 
@@ -387,6 +391,7 @@
     .resp.certa { background: var(--ok-bg);  color: var(--ok); }
     .item-revisao .explica { font-size: .92rem; }
     .item-revisao .fonte { font-size: .8rem; color: var(--muted); }
+    .item-revisao .fonte:empty { display: none; }
 
     /* =========================================================
        11. POPUP DE CADASTRO
@@ -706,7 +711,7 @@
       <div class="hero-texto">
         <span class="eyebrow">Brasília · Praça dos Três Poderes</span>
         <h1>Quem faz a lei, quem governa e <i>quem julga?</i></h1>
-        <p class="lead">Um quiz de 15 perguntas sobre o Legislativo, o Executivo e o Judiciário, com base na Constituição Federal de 1988.</p>
+        <p class="lead">Um quiz sobre o Legislativo, o Executivo e o Judiciário, com base na Constituição Federal de 1988. Cada partida sorteia 10 perguntas de um banco de 60.</p>
         <div class="acoes">
           <a class="btn btn-dark" href="#quiz">Começar o quiz</a>
           <a class="btn" href="#poderes">Conhecer os Poderes</a>
@@ -788,12 +793,12 @@
           <span class="num" id="num">?</span>
           <div>
             <h2 id="quiz-titulo">Quiz dos Três Poderes</h2>
-            <p class="sub" id="quiz-sub">15 perguntas · múltipla escolha</p>
+            <p class="sub" id="quiz-sub">10 perguntas · até 115 pontos</p>
           </div>
         </div>
         <div class="progresso">
           <span class="barra"><i id="barra"></i></span>
-          <span id="prog-txt">0/15 · 0%</span>
+          <span id="prog-txt">0/10 · 0 pts</span>
         </div>
       </div>
 
@@ -802,12 +807,11 @@
         <!-- Tela inicial -->
         <div class="inicio cena" id="tela-inicio">
           <p class="saudacao" id="saudacao"></p>
-          <p>As perguntas aparecem em ordem aleatória. Depois de cada resposta, você vê a explicação e o artigo da Constituição relacionado. No final, o placar mostra seu desempenho em cada poder.</p>
+          <p>Cada partida sorteia 10 perguntas do banco de 60: 3 fáceis, 4 médias e 3 difíceis, nessa ordem. Quanto mais difícil, mais pontos vale. Depois de cada resposta, você vê a explicação. No final, sua pontuação entra no ranking.</p>
           <div class="chips">
-            <span class="chip leg">Legislativo</span>
-            <span class="chip exe">Executivo</span>
-            <span class="chip jud">Judiciário</span>
-            <span class="chip ger">Geral</span>
+            <span class="chip facil">Fácil · 5 pts</span>
+            <span class="chip medio">Médio · 10 pts</span>
+            <span class="chip dificil">Difícil · 20 pts</span>
           </div>
           <div><button class="btn btn-dark" id="btn-iniciar" type="button">Começar</button></div>
         </div>
@@ -816,6 +820,7 @@
         <div id="tela-pergunta" hidden>
           <div class="cena" id="cena">
             <div class="pergunta-linha">
+              <span class="chip" id="tag-nivel"></span>
               <span class="chip" id="tag-poder"></span>
               <span class="chip status" id="status">Aguardando resposta</span>
             </div>
@@ -842,7 +847,7 @@
               <span class="posicao" id="posicao"></span>
             </div>
           </div>
-          <div class="placar"><b id="acertos">0</b><span>de <span id="total">15</span> acertos</span></div>
+          <div class="placar"><b id="placar-pontos">0</b><span>de <span id="pontos-max">115</span> pontos · <span id="placar-acertos"></span></span></div>
           <p class="veredito" id="mensagem"></p>
           <div class="por-poder" id="por-poder"></div>
           <div class="acoes-fim">
@@ -868,7 +873,7 @@
         <div>
           <span class="eyebrow">Classificação geral</span>
           <h2>Ranking</h2>
-          <p class="sub">Quem acertou mais fica em cima. No empate, vence quem terminou mais rápido.</p>
+          <p class="sub">Quem fez mais pontos fica em cima. No empate, vence quem terminou mais rápido.</p>
         </div>
         <button class="btn" id="btn-atualizar-ranking" type="button">Atualizar</button>
       </div>
@@ -910,127 +915,356 @@
       "Geral":       "ger"
     };
 
+    // Níveis de dificuldade: pontos e quantas questões de cada um entram por partida
+    const NIVEIS = {
+      facil:   { nome: "Fácil",   pontos: 5,  porPartida: 3 },
+      medio:   { nome: "Médio",   pontos: 10, porPartida: 4 },
+      dificil: { nome: "Difícil", pontos: 20, porPartida: 3 }
+    };
+
+    // Embaralha a ordem das alternativas A–D a cada partida
+    // (no material, a maioria das respostas certas é a letra B)
+    const EMBARALHAR_ALTERNATIVAS = true;
+
+    /*
+      Banco com as 60 questões do material de apoio (PDF).
+      num     = número da questão no PDF
+      nivel   = "facil" | "medio" | "dificil"
+      correta = posição da alternativa certa (0 = A, 1 = B, 2 = C, 3 = D)
+      fonte   = opcional (artigo da Constituição citado)
+    */
     const perguntas = [
-      {
-        poder: "Geral",
+      /* ---------- Rodada 1 – Conhecendo os três poderes ---------- */
+      { num: 1, nivel: "facil", poder: "Geral",
         pergunta: "Qual filósofo sistematizou a teoria da separação dos três poderes?",
         alternativas: ["Rousseau", "Montesquieu", "Maquiavel", "John Locke"],
         correta: 1,
-        explicacao: "Montesquieu desenvolveu a teoria em O Espírito das Leis, publicado em 1748.",
-        fonte: "O Espírito das Leis, 1748"
-      },
-      {
-        poder: "Geral",
-        pergunta: "Qual artigo da Constituição de 1988 estabelece os três poderes?",
+        explicacao: "Montesquieu desenvolveu a teoria da separação dos poderes em sua obra O Espírito das Leis, publicada em 1748. A proposta busca evitar a concentração de poder nas mãos de uma única pessoa ou instituição.",
+        fonte: "O Espírito das Leis, 1748" },
+      { num: 2, nivel: "facil", poder: "Geral",
+        pergunta: "Qual artigo da Constituição Federal de 1988 estabelece a existência dos três poderes?",
         alternativas: ["Art. 1º", "Art. 2º", "Art. 5º", "Art. 60"],
         correta: 1,
-        explicacao: "O Art. 2º diz que os Poderes da União são independentes e harmônicos entre si.",
-        fonte: "CF/88, Art. 2º"
-      },
-      {
-        poder: "Legislativo",
+        explicacao: "O artigo 2º estabelece que Legislativo, Executivo e Judiciário são poderes independentes e harmônicos entre si.",
+        fonte: "CF/88, Art. 2º" },
+      { num: 3, nivel: "facil", poder: "Legislativo",
         pergunta: "Qual é a principal função do Poder Legislativo?",
-        alternativas: ["Julgar processos", "Administrar o país", "Elaborar leis e fiscalizar o Executivo", "Comandar as Forças Armadas"],
+        alternativas: ["Administrar os serviços públicos", "Julgar processos judiciais", "Elaborar leis e fiscalizar o Executivo", "Comandar as Forças Armadas"],
         correta: 2,
-        explicacao: "O Legislativo cria as leis e fiscaliza os atos do Executivo, com o auxílio do Tribunal de Contas da União.",
-        fonte: "CF/88, Arts. 48, 49 e 70"
-      },
-      {
-        poder: "Legislativo",
-        pergunta: "O Congresso Nacional é formado por:",
-        alternativas: ["Câmara dos Deputados e Senado Federal", "Senado Federal e STF", "Câmara dos Deputados e Assembleias Legislativas", "Presidência e Ministérios"],
-        correta: 0,
-        explicacao: "O Legislativo federal é bicameral: Câmara dos Deputados e Senado Federal.",
-        fonte: "CF/88, Art. 44"
-      },
-      {
-        poder: "Legislativo",
-        pergunta: "Quantos senadores cada estado elege?",
-        alternativas: ["1", "2", "3", "Depende da população"],
-        correta: 2,
-        explicacao: "Cada estado e o Distrito Federal elegem 3 senadores, num total de 81, com mandato de 8 anos.",
-        fonte: "CF/88, Art. 46"
-      },
-      {
-        poder: "Legislativo",
-        pergunta: "Qual é a duração do mandato de um deputado federal?",
-        alternativas: ["2 anos", "4 anos", "6 anos", "8 anos"],
+        explicacao: "O Legislativo tem como funções principais elaborar leis e fiscalizar os atos do Poder Executivo." },
+      { num: 4, nivel: "medio", poder: "Geral",
+        pergunta: "O que significa o sistema de freios e contrapesos?",
+        alternativas: ["Os poderes possuem autoridade ilimitada", "Os poderes se controlam mutuamente para evitar abusos", "O Executivo possui autoridade sobre os demais", "O Judiciário pode eliminar o Legislativo"],
         correta: 1,
-        explicacao: "Deputados federais têm mandato de 4 anos, que corresponde a uma legislatura.",
-        fonte: "CF/88, Art. 44, parágrafo único"
-      },
-      {
-        poder: "Executivo",
+        explicacao: "O sistema permite que os poderes controlem determinadas ações uns dos outros, impedindo abusos e contribuindo para o equilíbrio institucional." },
+      { num: 5, nivel: "medio", poder: "Legislativo",
+        pergunta: "O Congresso Nacional brasileiro é formado por quais instituições?",
+        alternativas: ["STF e Senado Federal", "Câmara Municipal e Câmara dos Deputados", "Câmara dos Deputados e Senado Federal", "Senado Federal e TSE"],
+        correta: 2,
+        explicacao: "Segundo o artigo 44 da Constituição Federal, o Congresso Nacional é composto pela Câmara dos Deputados e pelo Senado Federal.",
+        fonte: "CF/88, Art. 44" },
+      { num: 6, nivel: "medio", poder: "Executivo",
         pergunta: "Quem chefia o Poder Executivo federal?",
-        alternativas: ["O Presidente do Senado", "O Presidente do STF", "O Presidente da República", "O Ministro da Justiça"],
-        correta: 2,
-        explicacao: "O Presidente da República exerce o Executivo, auxiliado pelos Ministros de Estado.",
-        fonte: "CF/88, Art. 76"
-      },
-      {
-        poder: "Executivo",
-        pergunta: "Nos estados, quem exerce o Poder Executivo?",
-        alternativas: ["Prefeito", "Governador", "Deputado estadual", "Desembargador"],
+        alternativas: ["Presidente do Senado", "Presidente do STF", "Presidente da Câmara", "Presidente da República"],
+        correta: 3,
+        explicacao: "O artigo 76 da Constituição determina que o Poder Executivo federal é exercido pelo Presidente da República, auxiliado pelos ministros de Estado.",
+        fonte: "CF/88, Art. 76" },
+      { num: 7, nivel: "medio", poder: "Judiciário",
+        pergunta: "Qual é o órgão de cúpula do Poder Judiciário brasileiro?",
+        alternativas: ["STJ", "STF", "TSE", "CNJ"],
         correta: 1,
-        explicacao: "Nos estados é o Governador. Nos municípios, o Prefeito.",
-        fonte: "CF/88, Arts. 28 e 29"
-      },
-      {
-        poder: "Executivo",
-        pergunta: "O que é o veto presidencial?",
-        alternativas: ["A anulação de uma decisão judicial", "A recusa do Presidente em sancionar, total ou parcialmente, um projeto de lei", "A dissolução do Congresso", "A nomeação de ministros"],
+        explicacao: "O Supremo Tribunal Federal é a mais alta instância do Judiciário brasileiro e possui a função de proteger a Constituição Federal." },
+      { num: 8, nivel: "dificil", poder: "Geral",
+        pergunta: "Quem julga o Presidente da República nos crimes de responsabilidade?",
+        alternativas: ["Supremo Tribunal Federal", "Câmara dos Deputados", "Senado Federal", "Tribunal Superior Eleitoral"],
+        correta: 2,
+        explicacao: "A Câmara dos Deputados autoriza a instauração do processo por dois terços de seus membros. Depois, o Senado Federal realiza o julgamento, presidido pelo presidente do STF." },
+      { num: 9, nivel: "dificil", poder: "Geral",
+        pergunta: "Qual princípio constitucional impede que um dos três poderes concentre todas as funções do Estado?",
+        alternativas: ["Soberania popular", "Separação dos poderes", "Supremacia administrativa", "Centralização política"],
         correta: 1,
-        explicacao: "O Congresso pode derrubar o veto por maioria absoluta. É um exemplo de freios e contrapesos.",
-        fonte: "CF/88, Art. 66"
-      },
-      {
-        poder: "Executivo",
-        pergunta: "Qual instrumento permite ao Presidente editar normas com força de lei em casos de relevância e urgência?",
-        alternativas: ["Decreto legislativo", "Emenda constitucional", "Medida provisória", "Súmula vinculante"],
+        explicacao: "A separação dos poderes distribui as funções estatais entre instituições diferentes, garantindo independência e evitando a concentração excessiva de autoridade. É uma proteção constitucional, inclusive prevista como cláusula pétrea no artigo 60, § 4º, III.",
+        fonte: "CF/88, Art. 60, § 4º, III" },
+      { num: 10, nivel: "dificil", poder: "Executivo",
+        pergunta: "Se o Presidente da República discordar de um projeto de lei aprovado pelo Congresso Nacional, qual instrumento constitucional poderá utilizar?",
+        alternativas: ["Impeachment", "Veto presidencial", "Ação popular", "Medida judicial"],
+        correta: 1,
+        explicacao: "O Presidente pode vetar total ou parcialmente um projeto de lei, conforme o artigo 66 da Constituição. O Congresso Nacional pode posteriormente analisar e eventualmente derrubar o veto.",
+        fonte: "CF/88, Art. 66" },
+
+      /* ---------- Rodada 2 – Poder Legislativo ---------- */
+      { num: 11, nivel: "facil", poder: "Legislativo",
+        pergunta: "Quantos senadores cada estado brasileiro elege?",
+        alternativas: ["Um", "Dois", "Três", "Quatro"],
         correta: 2,
-        explicacao: "A medida provisória tem força de lei, mas precisa ser aprovada pelo Congresso para continuar valendo.",
-        fonte: "CF/88, Art. 62"
-      },
-      {
-        poder: "Judiciário",
-        pergunta: "Qual é o órgão máximo do Poder Judiciário brasileiro?",
-        alternativas: ["STJ", "TSE", "STF", "TST"],
+        explicacao: "Cada estado e o Distrito Federal elegem três senadores, totalizando 81 integrantes no Senado Federal." },
+      { num: 12, nivel: "facil", poder: "Legislativo",
+        pergunta: "Qual é a duração do mandato de um deputado federal?",
+        alternativas: ["Dois anos", "Quatro anos", "Seis anos", "Oito anos"],
+        correta: 1,
+        explicacao: "Os deputados federais são eleitos para mandatos de quatro anos, podendo concorrer à reeleição." },
+      { num: 13, nivel: "facil", poder: "Legislativo",
+        pergunta: "Qual é a função dos vereadores?",
+        alternativas: ["Administrar o município", "Elaborar leis municipais e fiscalizar o prefeito", "Julgar processos estaduais", "Nomear os governadores"],
+        correta: 1,
+        explicacao: "Os vereadores integram o Poder Legislativo municipal. Eles discutem e aprovam leis municipais e fiscalizam a administração do prefeito." },
+      { num: 14, nivel: "medio", poder: "Legislativo",
+        pergunta: "Qual é a principal diferença entre a Câmara dos Deputados e o Senado Federal?",
+        alternativas: ["A Câmara representa os estados e o Senado representa a população", "A Câmara representa o povo e o Senado representa os estados e o Distrito Federal", "Ambos representam exclusivamente os municípios", "O Senado representa o Poder Judiciário"],
+        correta: 1,
+        explicacao: "Os deputados federais representam a população, enquanto os senadores representam os estados e o Distrito Federal." },
+      { num: 15, nivel: "medio", poder: "Legislativo",
+        pergunta: "Quando o Poder Legislativo fiscaliza as contas do Presidente da República, qual instituição auxilia nesse controle?",
+        alternativas: ["Tribunal de Contas da União", "Polícia Federal", "Tribunal Superior Eleitoral", "Ministério da Justiça"],
+        correta: 0,
+        explicacao: "O Tribunal de Contas da União auxilia o Congresso Nacional no controle externo da administração pública federal, conforme o artigo 71 da Constituição.",
+        fonte: "CF/88, Art. 71" },
+      { num: 16, nivel: "medio", poder: "Legislativo",
+        pergunta: "O que é uma Comissão Parlamentar de Inquérito (CPI)?",
+        alternativas: ["Um órgão responsável por criar leis municipais", "Uma comissão destinada a investigar fato determinado por prazo certo", "Um tribunal responsável por condenar criminosos", "Uma instituição que substitui o STF"],
+        correta: 1,
+        explicacao: "A CPI é um instrumento de investigação do Poder Legislativo. Ela apura fatos determinados e possui prazo certo, conforme o artigo 58, § 3º, da Constituição.",
+        fonte: "CF/88, Art. 58, § 3º" },
+      { num: 17, nivel: "medio", poder: "Legislativo",
+        pergunta: "Quem possui competência para aprovar o orçamento federal?",
+        alternativas: ["Exclusivamente o Presidente da República", "O Supremo Tribunal Federal", "O Congresso Nacional", "O Tribunal Superior Eleitoral"],
         correta: 2,
-        explicacao: "O Supremo Tribunal Federal é o guardião da Constituição.",
-        fonte: "CF/88, Art. 102"
-      },
-      {
-        poder: "Judiciário",
-        pergunta: "Quantos ministros compõem o STF?",
+        explicacao: "O Executivo elabora e apresenta as propostas orçamentárias, mas cabe ao Congresso Nacional analisar, discutir e votar o orçamento, respeitando as regras constitucionais." },
+      { num: 18, nivel: "dificil", poder: "Legislativo",
+        pergunta: "Qual é o quórum necessário para aprovar uma emenda à Constituição Federal?",
+        alternativas: ["Maioria simples em uma votação", "Maioria absoluta em dois turnos", "Três quintos dos votos, em dois turnos, em cada Casa do Congresso", "Dois terços dos votos em uma única votação"],
+        correta: 2,
+        explicacao: "O artigo 60, § 2º, estabelece que uma proposta de emenda constitucional precisa ser aprovada em dois turnos na Câmara e no Senado, com três quintos dos votos dos respectivos membros em cada votação.",
+        fonte: "CF/88, Art. 60, § 2º" },
+      { num: 19, nivel: "dificil", poder: "Legislativo",
+        pergunta: "Qual é a diferença entre lei ordinária e lei complementar quanto ao quórum de aprovação?",
+        alternativas: ["Não existe diferença", "A lei complementar exige maioria absoluta, enquanto a lei ordinária, em regra, é aprovada por maioria simples, observados os requisitos de votação", "A lei ordinária exige unanimidade", "A lei complementar depende exclusivamente do STF"],
+        correta: 1,
+        explicacao: "O artigo 69 da Constituição determina que as leis complementares sejam aprovadas por maioria absoluta. Já as leis ordinárias seguem a regra geral de maioria dos votos, desde que presente a maioria absoluta dos membros da Casa.",
+        fonte: "CF/88, Art. 69" },
+      { num: 20, nivel: "dificil", poder: "Legislativo",
+        pergunta: "Uma CPI identifica indícios de crime durante uma investigação. O que ela pode fazer?",
+        alternativas: ["Condenar definitivamente os investigados", "Decretar automaticamente a prisão dos envolvidos", "Encaminhar suas conclusões ao Ministério Público para que promova a responsabilização cabível", "Substituir o Poder Judiciário no julgamento"],
+        correta: 2,
+        explicacao: "A CPI possui poderes de investigação próprios das autoridades judiciais, nos limites constitucionais, mas não exerce a função de julgar e condenar definitivamente. Suas conclusões podem ser encaminhadas ao Ministério Público." },
+
+      /* ---------- Rodada 3 – Poder Executivo ---------- */
+      { num: 21, nivel: "facil", poder: "Executivo",
+        pergunta: "Nos estados brasileiros, quem exerce o Poder Executivo?",
+        alternativas: ["Prefeito", "Governador", "Deputado estadual", "Senador"],
+        correta: 1,
+        explicacao: "O governador é o chefe do Poder Executivo estadual. Nos municípios, essa função é exercida pelo prefeito." },
+      { num: 22, nivel: "facil", poder: "Executivo",
+        pergunta: "O que é uma medida provisória?",
+        alternativas: ["Uma decisão judicial definitiva", "Uma norma editada pelo Presidente da República com força de lei em situações de relevância e urgência", "Uma proposta apresentada pelos vereadores", "Uma decisão exclusiva do Senado"],
+        correta: 1,
+        explicacao: "O artigo 62 da Constituição permite que o Presidente edite medidas provisórias em situações de relevância e urgência. Elas precisam ser submetidas à apreciação do Congresso Nacional.",
+        fonte: "CF/88, Art. 62" },
+      { num: 23, nivel: "facil", poder: "Executivo",
+        pergunta: "Qual é a função principal do prefeito?",
+        alternativas: ["Administrar o município", "Julgar processos municipais", "Elaborar a Constituição Federal", "Fiscalizar o STF"],
+        correta: 0,
+        explicacao: "O prefeito é responsável por administrar o município e executar políticas públicas locais, como saúde, educação e infraestrutura, respeitadas as competências de cada ente federativo." },
+      { num: 24, nivel: "medio", poder: "Executivo",
+        pergunta: "O que significa veto presidencial?",
+        alternativas: ["Aprovação obrigatória de um projeto de lei", "Recusa total ou parcial do Presidente em sancionar um projeto de lei", "Cancelamento de uma decisão judicial", "Retirada de um senador do Congresso"],
+        correta: 1,
+        explicacao: "O veto é um instrumento utilizado pelo Presidente quando considera um projeto de lei inconstitucional ou contrário ao interesse público." },
+      { num: 25, nivel: "medio", poder: "Executivo",
+        pergunta: "Qual é a função dos ministros de Estado?",
+        alternativas: ["Auxiliar o Presidente da República na administração federal", "Substituir os deputados federais", "Julgar os processos do STF", "Fiscalizar exclusivamente os governadores"],
+        correta: 0,
+        explicacao: "Os ministros de Estado auxiliam o Presidente na direção e coordenação das áreas do governo federal." },
+      { num: 26, nivel: "medio", poder: "Executivo",
+        pergunta: "Quando o Presidente da República se ausenta do país, quem assume temporariamente o cargo?",
+        alternativas: ["Presidente do STF", "Presidente do Senado", "Vice-presidente da República", "Presidente da Câmara Municipal"],
+        correta: 2,
+        explicacao: "O vice-presidente substitui o Presidente em seus impedimentos e o sucede em caso de vaga, conforme o artigo 79 da Constituição.",
+        fonte: "CF/88, Art. 79" },
+      { num: 27, nivel: "medio", poder: "Executivo",
+        pergunta: "Qual é a principal diferença entre sancionar e promulgar uma lei?",
+        alternativas: ["São exatamente a mesma coisa", "Sancionar é concordar com o projeto de lei; promulgar é atestar formalmente sua existência e determinar sua execução", "Sancionar é julgar e promulgar é fiscalizar", "Ambas são funções exclusivas do Legislativo"],
+        correta: 1,
+        explicacao: "A sanção representa a concordância do chefe do Executivo com o projeto aprovado. A promulgação certifica formalmente a existência da lei e determina sua execução." },
+      { num: 28, nivel: "dificil", poder: "Executivo",
+        pergunta: "Qual é o prazo constitucional inicial de vigência de uma medida provisória?",
+        alternativas: ["30 dias, sem possibilidade de prorrogação", "45 dias, com prorrogação ilimitada", "60 dias, prorrogáveis uma vez por igual período", "180 dias, sem análise do Congresso"],
+        correta: 2,
+        explicacao: "O artigo 62, §§ 3º e 7º, estabelece o prazo de 60 dias, prorrogável uma vez por igual período. Existem regras específicas para contagem e tramitação durante o recesso parlamentar.",
+        fonte: "CF/88, Art. 62, §§ 3º e 7º" },
+      { num: 29, nivel: "dificil", poder: "Executivo",
+        pergunta: "Em qual situação o Presidente da República pode ser responsabilizado por crime de responsabilidade?",
+        alternativas: ["Sempre que discordar de uma decisão do Congresso", "Quando praticar atos que atentem contra a Constituição e se enquadrem nas hipóteses legais de crime de responsabilidade", "Quando perder uma votação popular", "Quando um ministro discordar de suas decisões"],
+        correta: 1,
+        explicacao: "Os crimes de responsabilidade são infrações político-administrativas previstas na Constituição e na legislação. Entre os exemplos estão atos contra a existência da União, o livre exercício dos poderes e a probidade administrativa." },
+      { num: 30, nivel: "dificil", poder: "Executivo",
+        pergunta: "O Presidente da República pretende criar uma nova lei por decreto, sem participação do Congresso Nacional. Essa atitude é constitucionalmente permitida?",
+        alternativas: ["Sim, pois o Presidente possui poder legislativo ilimitado", "Sim, desde que tenha apoio popular", "Não, pois decretos não podem substituir livremente o processo legislativo previsto na Constituição", "Sim, desde que o STF autorize previamente"],
+        correta: 2,
+        explicacao: "O Presidente possui competência para editar determinados decretos dentro dos limites constitucionais, mas não pode criar livremente leis por decreto. A elaboração das leis deve respeitar o processo legislativo." },
+
+      /* ---------- Rodada 4 – Poder Judiciário ---------- */
+      { num: 31, nivel: "facil", poder: "Judiciário",
+        pergunta: "Quantos ministros compõem o Supremo Tribunal Federal?",
         alternativas: ["9", "11", "13", "15"],
         correta: 1,
-        explicacao: "São 11 ministros, indicados pelo Presidente e aprovados pela maioria absoluta do Senado.",
-        fonte: "CF/88, Art. 101"
-      },
-      {
-        poder: "Judiciário",
-        pergunta: "Qual tribunal organiza as eleições no Brasil?",
-        alternativas: ["STF", "STJ", "TSE", "TCU"],
+        explicacao: "O STF é composto por 11 ministros, conforme o artigo 101 da Constituição Federal.",
+        fonte: "CF/88, Art. 101" },
+      { num: 32, nivel: "facil", poder: "Judiciário",
+        pergunta: "Qual tribunal possui a função de organizar e coordenar a Justiça Eleitoral no Brasil?",
+        alternativas: ["STJ", "STF", "TSE", "TST"],
         correta: 2,
-        explicacao: "O Tribunal Superior Eleitoral organiza e fiscaliza as eleições em todo o país.",
-        fonte: "CF/88, Arts. 118 a 121"
-      },
-      {
-        poder: "Geral",
-        pergunta: "O que significa o sistema de freios e contrapesos?",
-        alternativas: ["Um poder é superior aos outros", "Os poderes se controlam mutuamente para evitar abusos", "Apenas o Judiciário pode controlar os outros", "Os poderes não se relacionam entre si"],
+        explicacao: "O Tribunal Superior Eleitoral é o órgão máximo da Justiça Eleitoral e possui funções relacionadas à organização e fiscalização do processo eleitoral." },
+      { num: 33, nivel: "facil", poder: "Judiciário",
+        pergunta: "Qual é a principal função do Poder Judiciário?",
+        alternativas: ["Criar impostos", "Administrar os municípios", "Julgar conflitos e aplicar o direito", "Elaborar projetos de lei"],
+        correta: 2,
+        explicacao: "O Judiciário resolve conflitos, interpreta e aplica as leis e protege os direitos previstos na Constituição e no ordenamento jurídico." },
+      { num: 34, nivel: "medio", poder: "Judiciário",
+        pergunta: "Quem indica os ministros do Supremo Tribunal Federal?",
+        alternativas: ["O Presidente da República, com aprovação do Senado Federal", "A Câmara dos Deputados, sem participação de outros poderes", "O Presidente do Senado", "O Conselho Nacional de Justiça"],
+        correta: 0,
+        explicacao: "O Presidente da República indica os ministros do STF, mas a nomeação depende da aprovação da maioria absoluta do Senado Federal." },
+      { num: 35, nivel: "medio", poder: "Judiciário",
+        pergunta: "Qual é a função do Superior Tribunal de Justiça (STJ)?",
+        alternativas: ["Organizar as eleições municipais", "Uniformizar a interpretação da legislação federal infraconstitucional", "Criar leis federais", "Administrar o Poder Executivo"],
         correta: 1,
-        explicacao: "Cada poder limita os outros: o Presidente veta leis, o Congresso derruba vetos e o STF declara leis inconstitucionais.",
-        fonte: "CF/88, Art. 2º"
-      },
-      {
-        poder: "Geral",
-        pergunta: "Quem julga o Presidente da República num processo de impeachment por crime de responsabilidade?",
-        alternativas: ["STF", "Câmara dos Deputados", "Senado Federal", "TSE"],
+        explicacao: "O STJ tem como uma de suas principais funções uniformizar a interpretação das leis federais, garantindo maior segurança jurídica." },
+      { num: 36, nivel: "medio", poder: "Judiciário",
+        pergunta: "O que é uma decisão judicial?",
+        alternativas: ["Uma proposta de lei", "Uma manifestação do Poder Judiciário sobre uma questão submetida à sua apreciação", "Uma ordem do Presidente da República", "Uma votação realizada pelo Senado"],
+        correta: 1,
+        explicacao: "A decisão judicial é o pronunciamento de um órgão do Judiciário sobre uma questão jurídica, podendo resolver conflitos e determinar providências." },
+      { num: 37, nivel: "medio", poder: "Judiciário",
+        pergunta: "Qual é a função do Conselho Nacional de Justiça (CNJ)?",
+        alternativas: ["Criar leis para o Congresso", "Exercer o controle administrativo e financeiro do Judiciário e fiscalizar o cumprimento dos deveres funcionais dos magistrados", "Substituir o STF em todos os julgamentos", "Nomear o Presidente da República"],
+        correta: 1,
+        explicacao: "O CNJ foi criado para aperfeiçoar o funcionamento do Judiciário, fiscalizando aspectos administrativos, financeiros e disciplinares." },
+      { num: 38, nivel: "dificil", poder: "Judiciário",
+        pergunta: "O que significa controle de constitucionalidade?",
+        alternativas: ["Fiscalizar exclusivamente as eleições", "Verificar se leis e atos normativos estão de acordo com a Constituição", "Permitir que o Presidente modifique a Constituição sozinho", "Impedir que o Legislativo aprove leis"],
+        correta: 1,
+        explicacao: "O controle de constitucionalidade verifica se normas respeitam a Constituição Federal. O STF exerce papel central nesse controle, especialmente nas ações de controle concentrado." },
+      { num: 39, nivel: "dificil", poder: "Judiciário",
+        pergunta: "Qual é a diferença entre uma Ação Direta de Inconstitucionalidade (ADI) e uma Ação Declaratória de Constitucionalidade (ADC)?",
+        alternativas: ["A ADI busca questionar a constitucionalidade de uma norma, enquanto a ADC busca confirmar sua constitucionalidade", "Ambas servem exclusivamente para julgar crimes", "A ADI é utilizada somente pelo Executivo", "A ADC permite criar novas leis"],
+        correta: 0,
+        explicacao: "A ADI busca obter o reconhecimento de que determinada norma é incompatível com a Constituição. Já a ADC busca confirmar que uma lei ou ato normativo federal é constitucional." },
+      { num: 40, nivel: "dificil", poder: "Judiciário",
+        pergunta: "Uma lei estadual contraria diretamente um dispositivo da Constituição Federal. Qual instrumento pode ser utilizado para questionar sua constitucionalidade diretamente no STF?",
+        alternativas: ["Medida provisória", "Ação Direta de Inconstitucionalidade, observada a legitimidade constitucional", "Veto presidencial", "CPI"],
+        correta: 1,
+        explicacao: "A ADI pode ser utilizada para questionar leis e atos normativos federais ou estaduais que contrariem a Constituição Federal, desde que proposta por um dos legitimados do artigo 103.",
+        fonte: "CF/88, Art. 103" },
+
+      /* ---------- Rodada 5 – Relação e equilíbrio entre os poderes ---------- */
+      { num: 41, nivel: "facil", poder: "Geral",
+        pergunta: "Qual dos três poderes é responsável pela administração pública?",
+        alternativas: ["Executivo", "Legislativo", "Judiciário", "Nenhum deles"],
+        correta: 0,
+        explicacao: "O Poder Executivo administra o Estado e executa políticas públicas, respeitando as competências constitucionais." },
+      { num: 42, nivel: "facil", poder: "Geral",
+        pergunta: "Qual poder é responsável pela elaboração das leis?",
+        alternativas: ["Judiciário", "Legislativo", "Executivo exclusivamente", "Ministério Público"],
+        correta: 1,
+        explicacao: "O Poder Legislativo exerce a função legislativa, discutindo e aprovando leis." },
+      { num: 43, nivel: "facil", poder: "Geral",
+        pergunta: "Qual poder é responsável por julgar os conflitos judiciais?",
+        alternativas: ["Legislativo", "Executivo", "Judiciário", "Congresso Nacional"],
         correta: 2,
-        explicacao: "A Câmara autoriza a abertura do processo por 2/3 dos votos, e o Senado julga, sob a presidência do presidente do STF.",
-        fonte: "CF/88, Arts. 51, 52 e 86"
-      }
+        explicacao: "O Poder Judiciário exerce a função jurisdicional, resolvendo conflitos e aplicando o direito." },
+      { num: 44, nivel: "medio", poder: "Geral",
+        pergunta: "O que acontece quando o Congresso Nacional derruba um veto presidencial?",
+        alternativas: ["O projeto é automaticamente arquivado", "O projeto retorna ao Presidente para uma nova votação", "O veto deixa de prevalecer e a lei segue para promulgação, conforme as regras constitucionais", "O STF assume a função legislativa"],
+        correta: 2,
+        explicacao: "O Congresso pode rejeitar o veto presidencial por maioria absoluta dos deputados e senadores, em sessão conjunta. Nesse caso, a lei poderá ser promulgada conforme o artigo 66 da Constituição.",
+        fonte: "CF/88, Art. 66" },
+      { num: 45, nivel: "medio", poder: "Geral",
+        pergunta: "Por que os três poderes são considerados independentes e harmônicos?",
+        alternativas: ["Porque não possuem nenhuma relação entre si", "Porque possuem funções próprias, mas devem atuar respeitando suas competências e os mecanismos de controle recíproco", "Porque todos são subordinados ao Presidente", "Porque o Judiciário controla todas as decisões dos demais"],
+        correta: 1,
+        explicacao: "Cada poder possui autonomia para exercer suas funções, mas deve respeitar os limites constitucionais e colaborar para o funcionamento do Estado." },
+      { num: 46, nivel: "medio", poder: "Geral",
+        pergunta: "Qual poder possui a competência de fiscalizar os atos do Poder Executivo no âmbito federal?",
+        alternativas: ["Somente o Judiciário", "Congresso Nacional, com auxílio do Tribunal de Contas da União", "Exclusivamente o Presidente da República", "Somente os governadores"],
+        correta: 1,
+        explicacao: "O Congresso Nacional exerce o controle externo sobre a administração federal com o auxílio do TCU." },
+      { num: 47, nivel: "medio", poder: "Judiciário",
+        pergunta: "O que acontece quando o Poder Judiciário declara uma lei inconstitucional?",
+        alternativas: ["A lei passa a ter validade obrigatória", "A lei é automaticamente transformada em medida provisória", "A norma pode deixar de produzir efeitos, conforme o tipo de controle e os efeitos da decisão", "O Presidente precisa aprová-la novamente"],
+        correta: 2,
+        explicacao: "Quando uma norma é declarada inconstitucional, ela pode ter sua aplicação afastada. Os efeitos da decisão dependem da modalidade de controle e das regras jurídicas aplicáveis." },
+      { num: 48, nivel: "dificil", poder: "Geral",
+        pergunta: "Uma lei aprovada pelo Congresso Nacional é considerada inconstitucional pelo STF. Qual princípio está sendo aplicado nesse caso?",
+        alternativas: ["Supremacia da Constituição", "Autonomia municipal", "Soberania administrativa", "Independência econômica"],
+        correta: 0,
+        explicacao: "A Constituição ocupa posição superior no ordenamento jurídico. Todas as leis e atos normativos devem respeitar seus princípios e determinações." },
+      { num: 49, nivel: "dificil", poder: "Geral",
+        pergunta: "O Presidente da República tenta impedir que o Congresso Nacional exerça suas funções constitucionais. Qual princípio está sendo ameaçado?",
+        alternativas: ["Separação e independência dos poderes", "Liberdade econômica", "Autonomia universitária", "Livre iniciativa"],
+        correta: 0,
+        explicacao: "A separação dos poderes impede que um deles interfira indevidamente nas competências dos outros. O livre funcionamento dos poderes é uma garantia fundamental da democracia constitucional." },
+      { num: 50, nivel: "dificil", poder: "Geral",
+        pergunta: "Por que a separação dos poderes é considerada uma garantia democrática?",
+        alternativas: ["Porque elimina a necessidade de eleições", "Porque concentra as decisões em uma única autoridade", "Porque distribui o poder político, limita abusos e permite mecanismos de fiscalização e controle", "Porque impede a participação popular"],
+        correta: 2,
+        explicacao: "A divisão das funções estatais impede a concentração excessiva de autoridade e cria mecanismos de controle, protegendo a democracia e os direitos dos cidadãos." },
+
+      /* ---------- Rodada 6 – Constituição Federal e situações práticas ---------- */
+      { num: 51, nivel: "facil", poder: "Geral",
+        pergunta: "Em qual ano foi promulgada a atual Constituição Federal brasileira?",
+        alternativas: ["1964", "1977", "1988", "1994"],
+        correta: 2,
+        explicacao: "A Constituição Federal vigente foi promulgada em 5 de outubro de 1988, após o período da ditadura militar." },
+      { num: 52, nivel: "facil", poder: "Geral",
+        pergunta: "Qual é o nome pelo qual ficou conhecida a Constituição Federal de 1988?",
+        alternativas: ["Constituição Imperial", "Constituição Cidadã", "Constituição Militar", "Constituição Provisória"],
+        correta: 1,
+        explicacao: "A Constituição de 1988 recebeu o nome de Constituição Cidadã por ampliar direitos fundamentais, garantias individuais e mecanismos de participação democrática." },
+      { num: 53, nivel: "facil", poder: "Geral",
+        pergunta: "Qual princípio estabelece que todos devem respeitar as leis, inclusive os governantes?",
+        alternativas: ["Legalidade", "Autoritarismo", "Centralização", "Supremacia pessoal"],
+        correta: 0,
+        explicacao: "O princípio da legalidade determina que a atuação do Estado deve respeitar a legislação e a Constituição. Na administração pública, esse princípio está expressamente previsto no artigo 37.",
+        fonte: "CF/88, Art. 37" },
+      { num: 54, nivel: "medio", poder: "Executivo",
+        pergunta: "Uma prefeitura deixa de oferecer medicamentos essenciais à população. Qual é a responsabilidade do Poder Executivo diante dessa situação?",
+        alternativas: ["Criar decisões judiciais", "Administrar os serviços públicos de saúde e buscar solucionar o problema", "Elaborar sentenças contra os moradores", "Fiscalizar exclusivamente as eleições"],
+        correta: 1,
+        explicacao: "Cabe ao Executivo administrar os serviços públicos e implementar políticas de saúde, observadas as responsabilidades de cada ente federativo." },
+      { num: 55, nivel: "medio", poder: "Executivo",
+        pergunta: "Um governador identifica a necessidade de ampliar os investimentos em segurança pública. Qual medida está de acordo com suas atribuições?",
+        alternativas: ["Criar sozinho novas leis penais para todo o Brasil", "Determinar diretamente as decisões dos juízes", "Planejar e executar políticas públicas de segurança dentro de suas competências", "Substituir as funções das câmaras municipais"],
+        correta: 2,
+        explicacao: "O governador pode desenvolver políticas estaduais de segurança pública e coordenar os órgãos estaduais responsáveis, respeitando a Constituição e as competências dos demais entes federativos." },
+      { num: 56, nivel: "medio", poder: "Geral",
+        pergunta: "Um cidadão percebe que uma obra pública está parada e questiona a prefeitura sobre a utilização dos recursos. Por que essa cobrança é importante?",
+        alternativas: ["Porque permite que o cidadão substitua o prefeito", "Porque fortalece a transparência e o controle social dos recursos públicos", "Porque impede o Legislativo de fiscalizar", "Porque permite que os moradores aprovem pagamentos individualmente"],
+        correta: 1,
+        explicacao: "A participação popular e o acesso às informações públicas ajudam a fiscalizar a administração e prevenir irregularidades." },
+      { num: 57, nivel: "medio", poder: "Geral",
+        pergunta: "Qual artigo da Constituição Federal apresenta os direitos e garantias fundamentais individuais e coletivos?",
+        alternativas: ["Art. 2º", "Art. 5º", "Art. 44", "Art. 76"],
+        correta: 1,
+        explicacao: "O artigo 5º reúne direitos e garantias fundamentais, como igualdade perante a lei, liberdade de expressão, direito à vida e direito à propriedade.",
+        fonte: "CF/88, Art. 5º" },
+      { num: 58, nivel: "dificil", poder: "Geral",
+        pergunta: "O artigo 60, § 4º, da Constituição Federal estabelece limitações ao poder de reforma constitucional. Qual das alternativas apresenta uma dessas limitações?",
+        alternativas: ["A impossibilidade de modificar qualquer artigo da Constituição", "A proibição de abolir a separação dos poderes", "A proibição de realizar eleições", "A impossibilidade de criar leis complementares"],
+        correta: 1,
+        explicacao: "A separação dos poderes é uma cláusula pétrea. Isso significa que não pode ser abolida por meio de uma proposta de emenda constitucional.",
+        fonte: "CF/88, Art. 60, § 4º" },
+      { num: 59, nivel: "dificil", poder: "Geral",
+        pergunta: "O Presidente da República pratica um ato que desrespeita os limites estabelecidos pela Constituição. Qual alternativa representa um mecanismo de controle institucional?",
+        alternativas: ["O Presidente pode decidir sozinho se o ato será considerado válido", "O Congresso e o Judiciário podem atuar dentro de suas respectivas competências para fiscalizar e controlar a legalidade e a constitucionalidade do ato", "Os governadores podem assumir automaticamente o governo federal", "O Senado pode substituir todas as decisões judiciais"],
+        correta: 1,
+        explicacao: "A Constituição estabelece mecanismos de controle entre as instituições. Dependendo da natureza do ato, o Legislativo pode exercer fiscalização política e o Judiciário pode analisar sua legalidade ou constitucionalidade." },
+      { num: 60, nivel: "dificil", poder: "Geral",
+        pergunta: "Uma lei aprovada pelo Congresso Nacional viola direitos fundamentais previstos na Constituição. Um cidadão deseja questionar essa situação judicialmente. Qual alternativa está correta?",
+        alternativas: ["Qualquer cidadão pode propor diretamente uma ADI no STF", "O cidadão pode utilizar instrumentos como a ação popular, quando presentes seus requisitos, ou provocar o Judiciário por meio de uma ação adequada, mas não possui legitimidade para propor diretamente uma ADI", "Somente o Presidente pode questionar a lei", "Nenhuma lei pode ser questionada depois de aprovada"],
+        correta: 1,
+        explicacao: "A ação popular pode ser utilizada por qualquer cidadão para questionar atos lesivos ao patrimônio público, à moralidade administrativa, ao meio ambiente e ao patrimônio histórico e cultural. Já a ADI somente pode ser proposta pelos legitimados previstos no artigo 103 da Constituição.",
+        fonte: "CF/88, Art. 103" }
     ];
 
 
@@ -1081,10 +1315,22 @@
       return c;
     }
 
+    // Quantidade de perguntas e pontuação máxima de uma partida
+    const POR_PARTIDA = Object.values(NIVEIS).reduce((s, n) => s + n.porPartida, 0);
+    const PONTOS_MAX  = Object.values(NIVEIS).reduce((s, n) => s + n.porPartida * n.pontos, 0);
+
     function atualizarProgresso(feitas) {
-      const pct = Math.round(feitas / ordem.length * 100);
-      $("barra").style.width = pct + "%";
-      $("prog-txt").textContent = `${feitas}/${ordem.length} · ${pct}%`;
+      const total = ordem.length || POR_PARTIDA;
+      $("barra").style.width = Math.round(feitas / total * 100) + "%";
+      $("prog-txt").textContent = `${feitas}/${total} · ${pontosFeitos()} pts`;
+    }
+
+    function textoInicialQuiz() {
+      $("num").textContent = "?";
+      $("quiz-titulo").textContent = "Quiz dos Três Poderes";
+      $("quiz-sub").textContent = `${POR_PARTIDA} perguntas · até ${PONTOS_MAX} pontos`;
+      $("barra").style.width = "0%";
+      $("prog-txt").textContent = `0/${POR_PARTIDA} · 0 pts`;
     }
 
     function rolarPara(el) {
@@ -1246,11 +1492,9 @@
       $("escolha-avatar").classList.remove("invalido");
 
       // Volta o quiz para a tela inicial
-      $("num").textContent = "?";
-      $("quiz-titulo").textContent = "Quiz dos Três Poderes";
-      $("quiz-sub").textContent = `${perguntas.length} perguntas · múltipla escolha`;
-      $("barra").style.width = "0%";
-      $("prog-txt").textContent = `0/${perguntas.length} · 0%`;
+      ordem = [];
+      respostas = [];
+      textoInicialQuiz();
       mostrar("inicio");
 
       $("modal-cadastro").hidden = false;
@@ -1272,9 +1516,37 @@
     /* =========================================================
        6. QUIZ
        ========================================================= */
+    // Copia a pergunta com as alternativas em outra ordem (e ajusta qual é a certa)
+    function misturarAlternativas(p) {
+      if (!EMBARALHAR_ALTERNATIVAS) return { ...p };
+      const posicoes = embaralhar(p.alternativas.map((_, i) => i));
+      return {
+        ...p,
+        alternativas: posicoes.map(i => p.alternativas[i]),
+        correta: posicoes.indexOf(p.correta)
+      };
+    }
+
+    // Sorteia a partida: 3 fáceis, 4 médias e 3 difíceis, nessa ordem
+    function sortearPartida() {
+      return Object.keys(NIVEIS).flatMap(nivel =>
+        embaralhar(perguntas.filter(p => p.nivel === nivel))
+          .slice(0, NIVEIS[nivel].porPartida)
+          .map(misturarAlternativas)
+      );
+    }
+
+    function acertou(i) {
+      return respostas[i] === ordem[i].correta;
+    }
+
+    function pontosFeitos() {
+      return ordem.reduce((s, p, i) => s + (acertou(i) ? NIVEIS[p.nivel].pontos : 0), 0);
+    }
+
     function iniciar() {
       if (!participante) return;   // segurança: só joga quem se cadastrou
-      ordem = embaralhar(perguntas);
+      ordem = sortearPartida();
       atual = 0;
       respostas = [];
       inicioQuiz = Date.now();
@@ -1297,7 +1569,11 @@
 
       // Cabeçalho
       $("quiz-titulo").textContent = `Pergunta ${atual + 1}`;
-      $("quiz-sub").textContent = `de ${ordem.length} · ${p.poder}`;
+      $("quiz-sub").textContent = `de ${ordem.length} · ${NIVEIS[p.nivel].nome} · vale ${NIVEIS[p.nivel].pontos} pts`;
+
+      const nivel = $("tag-nivel");
+      nivel.textContent = `${NIVEIS[p.nivel].nome} · ${NIVEIS[p.nivel].pontos} pts`;
+      nivel.className = "chip " + p.nivel;
 
       const tag = $("tag-poder");
       tag.textContent = p.poder;
@@ -1345,9 +1621,11 @@
       // Explicação
       $("status").textContent = certo ? "Acertou" : "Errou";
       const exp = $("explicacao");
-      exp.innerHTML = `<strong class="${certo ? "ok" : "bad"}">${certo ? "Correto." : "Errado."}</strong> `;
+      const pts = NIVEIS[p.nivel].pontos;
+      exp.innerHTML = `<strong class="${certo ? "ok" : "bad"}">${certo ? `Correto! +${pts} pts.` : "Errado."}</strong> `;
       exp.append(p.explicacao);
-      $("fonte").textContent = p.fonte;
+      $("fonte").textContent = p.fonte || "";
+      $("fonte").hidden = !p.fonte;
       $("feedback").hidden = false;
 
       atualizarProgresso(atual + 1);
@@ -1367,7 +1645,7 @@
 
 
     /* =========================================================
-       6. RESULTADO
+       7. RESULTADO
        ========================================================= */
     function contar(el, ate) {
       if (reduzido) { el.textContent = ate; return; }
@@ -1387,21 +1665,19 @@
       return `${nome}, releia a seção sobre os Poderes e tente de novo.`;
     }
 
-    function acertou(i) {
-      return respostas[i] === ordem[i].correta;
-    }
-
     function resultado() {
       const total   = ordem.length;
       const acertos = ordem.filter((p, i) => acertou(i)).length;
       const erros   = total - acertos;
-      const pct     = acertos / total;
+      const pontos  = pontosFeitos();
+      const pct     = pontos / PONTOS_MAX;
       const tempo   = Math.round((Date.now() - inicioQuiz) / 1000);
 
       $("num").textContent = "✓";
       $("quiz-titulo").textContent = "Quiz concluído";
-      $("quiz-sub").textContent = `${acertos} de ${total} acertos`;
-      $("total").textContent = total;
+      $("quiz-sub").textContent = `${pontos} pontos · ${acertos} de ${total} acertos`;
+      $("pontos-max").textContent = PONTOS_MAX;
+      $("placar-acertos").textContent = `${acertos} de ${total} acertos`;
 
       // Dados do participante
       pintarAvatar($("avatar-resultado"), participante.avatar);
@@ -1409,18 +1685,18 @@
       $("participante-info").textContent = `${participante.curso} · ${participante.idade} anos · tempo ${formatarTempo(tempo)}`;
       $("mensagem").textContent = mensagemFinal(pct);
 
-      // Desempenho por poder
-      const porPoder = {};
-      Object.keys(PODERES).forEach(nome => {
-        const idx = ordem.map((p, i) => p.poder === nome ? i : -1).filter(i => i >= 0);
-        porPoder[nome] = { ok: idx.filter(acertou).length, t: idx.length };
+      // Desempenho por nível de dificuldade
+      const porNivel = {};
+      Object.keys(NIVEIS).forEach(nivel => {
+        const idx = ordem.map((p, i) => p.nivel === nivel ? i : -1).filter(i => i >= 0);
+        porNivel[nivel] = { ok: idx.filter(acertou).length, t: idx.length };
       });
 
-      $("por-poder").innerHTML = Object.keys(porPoder).map(nome => {
-        const { ok, t } = porPoder[nome];
+      $("por-poder").innerHTML = Object.keys(porNivel).map(nivel => {
+        const { ok, t } = porNivel[nivel];
         return `
           <div class="linha">
-            <span class="chip ${PODERES[nome]}" style="justify-self:start">${nome}</span>
+            <span class="chip ${nivel}" style="justify-self:start">${NIVEIS[nivel].nome}</span>
             <span class="barra"><i data-w="${t ? ok / t * 100 : 0}"></i></span>
             <span class="n">${ok}/${t}</span>
           </div>`;
@@ -1435,14 +1711,14 @@
       btnRevisar.textContent = `Revisar erros (${erros})`;
 
       mostrar("resultado");
-      contar($("acertos"), acertos);
+      contar($("placar-pontos"), pontos);
       requestAnimationFrame(() => requestAnimationFrame(() =>
         document.querySelectorAll(".linha .barra i").forEach(i => i.style.width = i.dataset.w + "%")
       ));
 
       // Envia para o ranking
-      const placarPorPoder = {};
-      for (const nome in porPoder) placarPorPoder[nome] = `${porPoder[nome].ok}/${porPoder[nome].t}`;
+      const placarPorNivel = {};
+      for (const nivel in porNivel) placarPorNivel[nivel] = `${porNivel[nivel].ok}/${porNivel[nivel].t}`;
 
       registrarNoRanking({
         id:        gerarId(),
@@ -1452,14 +1728,14 @@
         idade:     participante.idade,
         curso:     participante.curso,
         avatar:    participante.avatar,
-        acertos, total, tempo,
-        porPoder:  placarPorPoder
+        pontos, acertos, total, tempo,
+        porNivel:  placarPorNivel
       });
     }
 
 
     /* =========================================================
-       7. REVISÃO DAS QUESTÕES ERRADAS
+       8. REVISÃO DAS QUESTÕES ERRADAS
        ========================================================= */
     function renderRevisao() {
       const box = $("lista-revisao");
@@ -1472,19 +1748,21 @@
         const item = document.createElement("article");
         item.className = "item-revisao";
         item.innerHTML = `
-          <span class="chip ${PODERES[p.poder]}" style="justify-self:start"></span>
+          <div class="chips">
+            <span class="chip ${p.nivel}">${NIVEIS[p.nivel].nome} · ${NIVEIS[p.nivel].pontos} pts</span>
+            <span class="chip ${PODERES[p.poder]}">${p.poder}</span>
+          </div>
           <p class="enunciado"></p>
           <p class="resp sua"><b>Sua resposta:</b> <span></span></p>
           <p class="resp certa"><b>Correta:</b> <span></span></p>
           <p class="explica"></p>
           <span class="fonte"></span>`;
 
-        item.querySelector(".chip").textContent        = p.poder;
         item.querySelector(".enunciado").textContent   = p.pergunta;
         item.querySelector(".sua span").textContent    = `${LETRAS[escolhida]}) ${p.alternativas[escolhida]}`;
         item.querySelector(".certa span").textContent  = `${LETRAS[p.correta]}) ${p.alternativas[p.correta]}`;
         item.querySelector(".explica").textContent     = p.explicacao;
-        item.querySelector(".fonte").textContent       = p.fonte;
+        item.querySelector(".fonte").textContent       = p.fonte || "";
         box.appendChild(item);
       });
     }
@@ -1499,11 +1777,11 @@
 
 
     /* =========================================================
-       8. RANKING
+       9. RANKING
        Com URL_PLANILHA preenchida, os resultados vão para a
        planilha no Google Drive. Sem ela, ficam neste navegador.
        ========================================================= */
-    const CHAVE_LOCAL = "quiz3p-ranking";
+    const CHAVE_LOCAL = "quiz3p-ranking-pontos";
 
     function lerLocal() {
       try { return JSON.parse(localStorage.getItem(CHAVE_LOCAL)) || []; }
@@ -1514,10 +1792,10 @@
       try { localStorage.setItem(CHAVE_LOCAL, JSON.stringify(lista)); } catch (e) {}
     }
 
-    // Mais acertos primeiro; empate → menor tempo; depois quem jogou antes
+    // Mais pontos primeiro; empate → menor tempo; depois quem jogou antes
     function ordenarRanking(lista) {
       return [...lista].sort((a, b) =>
-        b.acertos - a.acertos || a.tempo - b.tempo || a.data - b.data
+        b.pontos - a.pontos || a.tempo - b.tempo || a.data - b.data
       );
     }
 
@@ -1576,7 +1854,7 @@
           <span class="pos">${pos}º</span>
           ${avatarHTML(r.avatar, pos)}
           <div class="quem"><b></b><span></span></div>
-          <div class="pontos"><b>${Number(r.acertos)}/${Number(r.total)}</b><span>${formatarTempo(r.tempo)}</span></div>`;
+          <div class="pontos"><b>${Number(r.pontos)} pts</b><span>${Number(r.acertos)}/${Number(r.total)} · ${formatarTempo(r.tempo)}</span></div>`;
         li.querySelector(".quem b").textContent    = `${r.nome} ${r.sobrenome}`;
         li.querySelector(".quem span").textContent = r.curso;
         lista.appendChild(li);
@@ -1601,10 +1879,9 @@
 
 
     /* =========================================================
-       9. INICIALIZAÇÃO E EVENTOS
+       10. INICIALIZAÇÃO E EVENTOS
        ========================================================= */
-    $("quiz-sub").textContent = `${perguntas.length} perguntas · múltipla escolha`;
-    $("prog-txt").textContent = `0/${perguntas.length} · 0%`;
+    textoInicialQuiz();
     document.querySelectorAll("[data-avatar]").forEach(el => el.innerHTML = AVATARES[el.dataset.avatar]);
 
     // Popup

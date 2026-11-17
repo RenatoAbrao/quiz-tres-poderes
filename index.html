@@ -430,13 +430,13 @@
     .modal .aviso { margin-top: 12px; text-align: center; font-size: .78rem; color: var(--muted); }
 
     /* Escolha do avatar */
-    .escolha-avatar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .escolha-avatar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
     .campo .opcao-avatar {
       position: relative;
-      display: flex; align-items: center; gap: 12px;
-      padding: 10px 12px;
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      padding: 12px 8px;
       border: 1px solid var(--line-strong); border-radius: 12px;
-      font-weight: 500; color: var(--text);
+      font-weight: 500; font-size: .82rem; color: var(--text); text-align: center; line-height: 1.25;
       cursor: pointer;
       transition: border-color .18s, background .18s, box-shadow .18s;
     }
@@ -445,11 +445,12 @@
     .opcao-avatar:has(input:checked) { border-color: var(--ink); background: var(--soft); box-shadow: inset 0 0 0 1px var(--ink); }
     .opcao-avatar:has(input:focus-visible) { outline: 2px solid var(--ink); outline-offset: 2px; }
     .escolha-avatar.invalido .opcao-avatar { border-color: var(--bad); background: var(--bad-bg); }
+    .opcao-avatar .avatar { width: 52px; height: 52px; }
 
     /* =========================================================
-       12. AVATARES
-       Mesmo desenho para todos; a cor do fundo muda conforme
-       a posição no ranking.
+       12. BONEQUINHOS
+       Três desenhos (masculino, feminino e branco). A cor do
+       fundo muda conforme a posição no ranking.
        ========================================================= */
     .avatar {
       --av-bg: var(--soft);
@@ -646,7 +647,7 @@
           </div>
 
           <div class="campo inteiro">
-            <span class="rotulo" id="rotulo-avatar">Avatar <span class="obrig">*</span></span>
+            <span class="rotulo" id="rotulo-avatar">Escolha seu bonequinho <span class="obrig">*</span></span>
             <div class="escolha-avatar" id="escolha-avatar" role="radiogroup" aria-labelledby="rotulo-avatar">
               <label class="opcao-avatar">
                 <input type="radio" name="avatar" value="m">
@@ -657,6 +658,11 @@
                 <input type="radio" name="avatar" value="f">
                 <span class="avatar" data-avatar="f"></span>
                 Feminino
+              </label>
+              <label class="opcao-avatar">
+                <input type="radio" name="avatar" value="n">
+                <span class="avatar" data-avatar="n"></span>
+                Prefiro não dizer
               </label>
             </div>
             <span class="erro" id="erro-avatar"></span>
@@ -1115,9 +1121,10 @@
 
 
     /* =========================================================
-       4. AVATARES
-       Desenho padrão masculino e feminino. A cor do fundo vem
-       do CSS (.pos-1, .pos-2, .pos-3, .pos-n) conforme a posição.
+       4. BONEQUINHOS
+       m = masculino, f = feminino, n = branco (não se identificar).
+       A cor do fundo vem do CSS (.pos-1, .pos-2, .pos-3, .pos-n)
+       conforme a posição no ranking.
        ========================================================= */
     const AVATARES = {
       m: `<svg viewBox="0 0 64 64" aria-hidden="true">
@@ -1132,23 +1139,32 @@
             <rect x="28" y="35" width="8" height="10" rx="3" fill="#e2b994"/>
             <circle cx="32" cy="26" r="11" fill="#f0cfb0"/>
             <path d="M21 26 C21 17 26 14 32 14 C38 14 43 17 43 26 C39 21 33 19 27 22 C24 23 22 24 21 26Z" fill="#5a3a2a"/>
+          </svg>`,
+      n: `<svg viewBox="0 0 64 64" aria-hidden="true">
+            <path d="M12 64 C12 50 21 43 32 43 C43 43 52 50 52 64Z" fill="#ffffff" stroke="#bdbdb8" stroke-width="1.5"/>
+            <circle cx="32" cy="26" r="11" fill="#ffffff" stroke="#bdbdb8" stroke-width="1.5"/>
           </svg>`
     };
+
+    // Qualquer valor desconhecido vira o bonequinho branco
+    function chaveBoneco(tipo) {
+      return AVATARES[tipo] ? tipo : "n";
+    }
 
     function classePosicao(pos) {
       if (!pos) return "";
       return pos <= 3 ? "pos-" + pos : "pos-n";
     }
 
-    // Devolve o HTML de um avatar (usado na lista do ranking)
+    // Devolve o HTML de um bonequinho (usado na lista do ranking)
     function avatarHTML(tipo, pos) {
-      return `<span class="avatar ${classePosicao(pos)}">${AVATARES[tipo === "f" ? "f" : "m"]}</span>`;
+      return `<span class="avatar ${classePosicao(pos)}">${AVATARES[chaveBoneco(tipo)]}</span>`;
     }
 
-    // Pinta um avatar que já existe na página (usado no resultado)
+    // Pinta um bonequinho que já existe na página (usado no resultado)
     function pintarAvatar(el, tipo, pos) {
       el.className = `avatar grande ${classePosicao(pos)}`;
-      el.innerHTML = AVATARES[tipo === "f" ? "f" : "m"];
+      el.innerHTML = AVATARES[chaveBoneco(tipo)];
     }
 
 
@@ -1165,7 +1181,7 @@
     function validarCampo(id) {
       if (id === "avatar") {
         const ok = !!avatarEscolhido();
-        $("erro-avatar").textContent = ok ? "" : "Escolha um avatar.";
+        $("erro-avatar").textContent = ok ? "" : "Escolha um bonequinho.";
         $("escolha-avatar").classList.toggle("invalido", !ok);
         return ok;
       }

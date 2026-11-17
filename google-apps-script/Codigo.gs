@@ -19,7 +19,7 @@
 
 const ABA = "Resultados";
 const CABECALHO = [
-  "Data", "ID", "Nome", "Sobrenome", "Idade", "Curso", "Avatar",
+  "Data", "ID", "Nome", "Sobrenome", "Idade", "Curso", "Bonequinho",
   "Acertos", "Total", "Tempo (s)",
   "Legislativo", "Executivo", "Judiciário", "Geral"
 ];
@@ -40,7 +40,7 @@ function doPost(e) {
       texto_(d.sobrenome, 60),
       numero_(d.idade, 1, 120),
       texto_(d.curso, 60),
-      d.avatar === "f" ? "f" : "m",
+      boneco_(d.avatar),
       numero_(d.acertos, 0, 100),
       numero_(d.total, 1, 100),
       numero_(d.tempo, 0, 86400),
@@ -72,7 +72,7 @@ function doGet() {
         nome:      String(r[2]),
         sobrenome: String(r[3]),
         curso:     String(r[5]),
-        avatar:    r[6] === "f" ? "f" : "m",
+        avatar:    boneco_(r[6]),
         acertos:   Number(r[7]) || 0,
         total:     Number(r[8]) || 0,
         tempo:     Number(r[9]) || 0
@@ -105,6 +105,11 @@ function texto_(valor, max) {
   let s = String(valor == null ? "" : valor).trim().slice(0, max);
   if (/^[=+\-@]/.test(s)) s = "'" + s;
   return s;
+}
+
+// m = masculino, f = feminino, n = branco (não se identificar)
+function boneco_(valor) {
+  return valor === "m" || valor === "f" ? valor : "n";
 }
 
 function numero_(valor, min, max) {

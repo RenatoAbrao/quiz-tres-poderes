@@ -1,5 +1,11 @@
 /**
- * QUIZ DOS TRÊS PODERES — Planilha de resultados (Google Drive)
+ * QUIZ DOS TRÊS PODERES — Dados no Google Drive
+ *
+ * A cada quiz terminado, este script:
+ *   1. grava uma linha na aba "Resultados" (todos os dados da partida);
+ *   2. refaz a aba "Ranking" (ordenada, com a posição de cada pessoa);
+ *   3. refaz o arquivo "resultados.csv" na pasta "Quiz Três Poderes - Dados"
+ *      do seu Google Drive (abre no Excel, Google Planilhas, Power BI etc.).
  *
  * COMO INSTALAR
  * 1. No Google Drive, crie uma Planilha Google (ex.: "Quiz Três Poderes - Resultados").
@@ -9,48 +15,70 @@
  *      - Tipo: App da Web
  *      - Executar como: Eu
  *      - Quem pode acessar: Qualquer pessoa
- *    Clique em Implantar e autorize o acesso com sua conta Google.
- *    (Se aparecer "O Google não verificou este app": Avançado > Acessar projeto.)
+ *    Clique em Implantar e autorize o acesso com sua conta Google
+ *    (ele pede acesso à planilha e ao Drive, por causa do arquivo CSV).
+ *    Se aparecer "O Google não verificou este app": Avançado > Acessar projeto.
  * 5. Copie a "URL do app da Web" (termina em /exec) e cole em URL_PLANILHA no index.html.
  *
  * Se alterar este código depois: Implantar > Gerenciar implantações > editar (lápis) >
  * Versão: "Nova versão" > Implantar. A URL continua a mesma.
+ *
+ * Na planilha aparece o menu "Quiz" > "Atualizar ranking e CSV agora",
+ * útil se você apagar ou corrigir linhas à mão.
  */
 
-const ABA = "Resultados";
-const CABECALHO = [
-  "Data", "ID", "Nome", "Sobrenome", "Idade", "Curso", "Bonequinho",
-  "Pontos", "Acertos", "Total", "Tempo (s)",
-  "Fácil", "Médio", "Difícil"
-];
-const LIMITE_RANKING = 100;
+const ABA_RESULTADOS = "Resultados";
+const ABA_RANKING    = "Ranking";
+const NOME_PASTA     = "Quiz Três Poderes - Dados";
+const NOME_CSV       = "resultados.csv";
+const LIMITE_RANKING = 100;   // quantas posições o site mostra
 
-/** Recebe um resultado do site e grava uma linha na planilha. */
+const CABECALHO = [
+  "Data", "ID", "Nome", "Sobrenome", "Sexo", "Idade", "Curso",
+  "Pontos", "Acertos", "Total de questões", "Tempo (s)",
+  "Acertos fáceis (de 3)", "Acertos médios (de 4)", "Acertos difíceis (de 3)"
+];
+
+// Colunas da aba Resultados (posição começando em 0)
+const C = {
+  data: 0, id: 1, nome: 2, sobrenome: 3, sexo: 4, idade: 5, curso: 6,
+  pontos: 7, acertos: 8, total: 9, tempo: 10, facil: 11, medio: 12, dificil: 13
+};
+
+// Bonequinho escolhido no site → sexo gravado na planilha
+const SEXOS = { m: "Masculino", f: "Feminino", n: "Não informado" };
+
+
+/* =========================================================
+   SITE → PLANILHA
+   ========================================================= */
+
+/** Recebe um resultado do site, grava e atualiza ranking + CSV. */
 function doPost(e) {
   const trava = LockService.getScriptLock();
-  trava.waitLock(10000);
+  trava.waitLock(20000);
   try {
     const d = JSON.parse(e.postData.contents);
     const porNivel = d.porNivel || {};
 
-    aba_().appendRow([
+    abaResultados_().appendRow([
       new Date(),
       texto_(d.id, 60),
       texto_(d.nome, 40),
       texto_(d.sobrenome, 60),
+      SEXOS[d.avatar] || SEXOS.n,
       numero_(d.idade, 1, 120),
       texto_(d.curso, 60),
-      boneco_(d.avatar),
       numero_(d.pontos, 0, 1000),
       numero_(d.acertos, 0, 100),
       numero_(d.total, 1, 100),
       numero_(d.tempo, 0, 86400),
-      // apóstrofo para o Sheets não transformar "2/4" em data
-      "'" + texto_(porNivel["facil"], 10),
-      "'" + texto_(porNivel["medio"], 10),
-      "'" + texto_(porNivel["dificil"], 10)
+      acertosDoNivel_(porNivel.facil),
+      acertosDoNivel_(porNivel.medio),
+      acertosDoNivel_(porNivel.dificil)
     ]);
 
+    atualizarRankingECsv_();
     return json_({ ok: true });
   } catch (erro) {
     return json_({ ok: false, erro: String(erro) });
@@ -59,41 +87,116 @@ function doPost(e) {
   }
 }
 
-/** Devolve o ranking (sem a idade, que não aparece publicamente). */
+/** Devolve o ranking para o site (sem idade, que não aparece publicamente). */
 function doGet() {
   try {
-    const linhas = aba_().getDataRange().getValues().slice(1);
-
-    const ranking = linhas
-      .filter(r => r[1])
+    const ranking = lerResultados_()
+      .slice(0, LIMITE_RANKING)
       .map(r => ({
-        id:        String(r[1]),
-        data:      new Date(r[0]).getTime(),
-        nome:      String(r[2]),
-        sobrenome: String(r[3]),
-        curso:     String(r[5]),
-        avatar:    boneco_(r[6]),
-        pontos:    Number(r[7]) || 0,
-        acertos:   Number(r[8]) || 0,
-        total:     Number(r[9]) || 0,
-        tempo:     Number(r[10]) || 0
-      }))
-      .sort((a, b) => b.pontos - a.pontos || a.tempo - b.tempo || a.data - b.data)
-      .slice(0, LIMITE_RANKING);
-
+        id:        String(r[C.id]),
+        data:      new Date(r[C.data]).getTime(),
+        nome:      String(r[C.nome]),
+        sobrenome: String(r[C.sobrenome]),
+        curso:     String(r[C.curso]),
+        avatar:    codigoSexo_(r[C.sexo]),
+        pontos:    Number(r[C.pontos])  || 0,
+        acertos:   Number(r[C.acertos]) || 0,
+        total:     Number(r[C.total])   || 0,
+        tempo:     Number(r[C.tempo])   || 0
+      }));
     return json_({ ok: true, ranking: ranking });
   } catch (erro) {
     return json_({ ok: false, erro: String(erro) });
   }
 }
 
-/* ---------- Auxiliares ---------- */
 
-function aba_() {
+/* =========================================================
+   RANKING E CSV
+   ========================================================= */
+
+/** Refaz a aba Ranking e o arquivo CSV a partir da aba Resultados. */
+function atualizarRankingECsv_() {
+  const linhas = lerResultados_();   // já ordenado
+  const fuso = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
+
+  const tabela = [[
+    "Posição", "Data", "Nome", "Sobrenome", "Sexo", "Idade", "Curso",
+    "Pontos", "Acertos", "Total de questões", "Tempo (s)", "Tempo (min:seg)",
+    "Acertos fáceis (de 3)", "Acertos médios (de 4)", "Acertos difíceis (de 3)"
+  ]].concat(linhas.map((r, i) => [
+    i + 1,
+    Utilities.formatDate(new Date(r[C.data]), fuso, "dd/MM/yyyy HH:mm:ss"),
+    r[C.nome], r[C.sobrenome], r[C.sexo], r[C.idade], r[C.curso],
+    r[C.pontos], r[C.acertos], r[C.total], r[C.tempo], minSeg_(r[C.tempo]),
+    r[C.facil], r[C.medio], r[C.dificil]
+  ].map(semFormula_)));
+
+  // Aba Ranking
+  const aba = abaRanking_();
+  aba.clearContents();
+  aba.getRange(1, 1, tabela.length, tabela[0].length).setValues(tabela);
+  aba.getRange(1, 1, 1, tabela[0].length).setFontWeight("bold");
+  aba.setFrozenRows(1);
+
+  // Arquivo CSV no Drive
+  arquivoCsv_().setContent(montarCsv_(tabela));
+}
+
+/**
+ * CSV no padrão brasileiro: separado por ponto e vírgula e com BOM UTF-8,
+ * para o Excel abrir com acentos certos e colunas separadas.
+ */
+function montarCsv_(tabela) {
+  const celula = v => {
+    const s = String(semFormula_(v == null ? "" : v));
+    return /[";\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  return "﻿" + tabela.map(l => l.map(celula).join(";")).join("\r\n") + "\r\n";
+}
+
+/** Linhas da aba Resultados, ordenadas: mais pontos, depois menor tempo, depois quem jogou antes. */
+function lerResultados_() {
+  const aba = abaResultados_();
+  if (aba.getLastRow() < 2) return [];
+  return aba.getRange(2, 1, aba.getLastRow() - 1, CABECALHO.length).getValues()
+    .filter(r => r[C.id])
+    .sort((a, b) =>
+      (Number(b[C.pontos]) || 0) - (Number(a[C.pontos]) || 0) ||
+      (Number(a[C.tempo])  || 0) - (Number(b[C.tempo])  || 0) ||
+      new Date(a[C.data]) - new Date(b[C.data])
+    );
+}
+
+
+/* =========================================================
+   MENU NA PLANILHA
+   ========================================================= */
+
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu("Quiz")
+    .addItem("Atualizar ranking e CSV agora", "atualizarManual")
+    .addToUi();
+}
+
+function atualizarManual() {
+  atualizarRankingECsv_();
+  SpreadsheetApp.getActiveSpreadsheet().toast(
+    'Ranking e "' + NOME_CSV + '" atualizados na pasta "' + NOME_PASTA + '".', "Quiz", 5
+  );
+}
+
+
+/* =========================================================
+   AUXILIARES
+   ========================================================= */
+
+function abaResultados_() {
   const planilha = SpreadsheetApp.getActiveSpreadsheet();
-  let aba = planilha.getSheetByName(ABA);
+  let aba = planilha.getSheetByName(ABA_RESULTADOS);
   if (!aba) {
-    aba = planilha.insertSheet(ABA);
+    aba = planilha.insertSheet(ABA_RESULTADOS);
     aba.appendRow(CABECALHO);
     aba.setFrozenRows(1);
     aba.getRange(1, 1, 1, CABECALHO.length).setFontWeight("bold");
@@ -101,16 +204,57 @@ function aba_() {
   return aba;
 }
 
-// Limita o tamanho e impede que o texto seja lido como fórmula (=, +, -, @)
-function texto_(valor, max) {
-  let s = String(valor == null ? "" : valor).trim().slice(0, max);
-  if (/^[=+\-@]/.test(s)) s = "'" + s;
-  return s;
+function abaRanking_() {
+  const planilha = SpreadsheetApp.getActiveSpreadsheet();
+  return planilha.getSheetByName(ABA_RANKING) || planilha.insertSheet(ABA_RANKING);
 }
 
-// m = masculino, f = feminino, n = branco (não se identificar)
-function boneco_(valor) {
-  return valor === "m" || valor === "f" ? valor : "n";
+// Pasta e arquivo são criados uma vez; os IDs ficam guardados para não duplicar
+function arquivoCsv_() {
+  const props = PropertiesService.getScriptProperties();
+
+  let pasta = null;
+  try { pasta = DriveApp.getFolderById(props.getProperty("PASTA_ID")); } catch (e) {}
+  if (!pasta || pasta.isTrashed()) {
+    pasta = DriveApp.createFolder(NOME_PASTA);
+    props.setProperty("PASTA_ID", pasta.getId());
+    props.deleteProperty("CSV_ID");
+  }
+
+  let arquivo = null;
+  try { arquivo = DriveApp.getFileById(props.getProperty("CSV_ID")); } catch (e) {}
+  if (!arquivo || arquivo.isTrashed()) {
+    arquivo = pasta.createFile(NOME_CSV, "", MimeType.CSV);
+    props.setProperty("CSV_ID", arquivo.getId());
+  }
+  return arquivo;
+}
+
+// "2/3" → 2
+function acertosDoNivel_(valor) {
+  const n = parseInt(String(valor || "0").split("/")[0], 10);
+  return isFinite(n) ? n : 0;
+}
+
+// "Feminino" → "f" (o site usa a letra para desenhar o bonequinho)
+function codigoSexo_(sexo) {
+  for (const k in SEXOS) if (SEXOS[k] === sexo) return k;
+  return "n";
+}
+
+function minSeg_(segundos) {
+  const s = Math.max(0, Math.round(Number(segundos) || 0));
+  return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+}
+
+// Texto começando com = + - @ viraria fórmula na planilha ou no Excel
+function semFormula_(v) {
+  return typeof v === "string" && /^[=+\-@]/.test(v) ? "'" + v : v;
+}
+
+// Limita o tamanho e impede que o texto seja lido como fórmula
+function texto_(valor, max) {
+  return semFormula_(String(valor == null ? "" : valor).trim().slice(0, max));
 }
 
 function numero_(valor, min, max) {

@@ -407,11 +407,21 @@
     @keyframes aparecer { from { opacity: 0; } to { opacity: 1; } }
 
     .modal {
+      position: relative;
       width: 100%; max-width: 460px; max-height: calc(100vh - 32px); overflow-y: auto;
       padding: 30px 28px 26px;
       background: var(--surface); border-radius: 22px; box-shadow: var(--shadow-up);
       animation: subir .45s var(--ease) both;
     }
+    .modal-fechar {
+      position: absolute; top: 14px; right: 14px;
+      display: grid; place-items: center;
+      width: 32px; height: 32px; border-radius: 8px;
+      background: none; border: none;
+      color: var(--muted); font-size: 1.1rem; line-height: 1;
+      cursor: pointer; transition: background .18s, color .18s;
+    }
+    .modal-fechar:hover { background: var(--soft); color: var(--ink); }
     .modal h2 { font-size: 1.6rem; margin-top: 6px; }
     .modal .intro { color: var(--muted); font-size: .92rem; margin: 8px 0 22px; }
 
@@ -632,6 +642,7 @@
        ========================================================= -->
   <div class="modal-fundo" id="modal-cadastro" hidden>
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+      <button class="modal-fechar" id="btn-fechar-modal" type="button" aria-label="Fechar">✕</button>
       <span class="eyebrow">Antes de começar</span>
       <h2 id="modal-titulo">Identifique-se</h2>
       <p class="intro">Preencha seus dados para acessar o quiz. Todos os campos são obrigatórios.</p>
@@ -2045,7 +2056,14 @@
     textoInicialQuiz();
     document.querySelectorAll("[data-avatar]").forEach(el => el.innerHTML = AVATARES[el.dataset.avatar]);
 
+    function cancelarCadastro() {
+      $("modal-cadastro").hidden = true;
+      document.body.classList.remove("travado");
+      queriaIniciar = false;
+    }
+
     // Popup
+    $("btn-fechar-modal").addEventListener("click", cancelarCadastro);
     $("form-cadastro").addEventListener("submit", enviarCadastro);
     ["nome", "sobrenome", "idade", "curso"].forEach(id => $(id).addEventListener("input", () => {
       if ($(id).classList.contains("invalido")) validarCampo(id);

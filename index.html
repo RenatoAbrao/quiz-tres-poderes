@@ -1528,13 +1528,33 @@
       };
     }
 
-    // Sorteia a partida: 3 fáceis, 4 médias e 3 difíceis, nessa ordem
+    // Sorteia a partida: 3 fáceis, 4 médias e 3 difíceis, garantindo
+    // ao menos 1 questão de cada poder (Legislativo, Executivo, Judiciário)
     function sortearPartida() {
-      return Object.keys(NIVEIS).flatMap(nivel =>
-        embaralhar(perguntas.filter(p => p.nivel === nivel))
-          .slice(0, NIVEIS[nivel].porPartida)
-          .map(misturarAlternativas)
-      );
+      const [poderA, poderB, poderC] = embaralhar(["Legislativo", "Executivo", "Judiciário"]);
+
+      function qs(nivel, poder) {
+        return embaralhar(perguntas.filter(p => p.nivel === nivel && p.poder === poder));
+      }
+      function qsNivel(nivel) {
+        return embaralhar(perguntas.filter(p => p.nivel === nivel));
+      }
+
+      // Fáceis: 1 garantida do poderA + 2 aleatórias do restante
+      const gFacil = qs("facil", poderA).slice(0, 1);
+      const usadosF = new Set(gFacil.map(p => p.num));
+      const faceis = [...gFacil, ...qsNivel("facil").filter(p => !usadosF.has(p.num)).slice(0, 2)];
+
+      // Médias: 1 garantida do poderB + 1 garantida do poderC + 2 aleatórias do restante
+      const gMedioB = qs("medio", poderB).slice(0, 1);
+      const gMedioC = qs("medio", poderC).slice(0, 1);
+      const usadosM = new Set([...gMedioB, ...gMedioC].map(p => p.num));
+      const medias = [...gMedioB, ...gMedioC, ...qsNivel("medio").filter(p => !usadosM.has(p.num)).slice(0, 2)];
+
+      // Difíceis: 3 aleatórias (os 3 poderes já garantidos nas rodadas acima)
+      const dificeis = qsNivel("dificil").slice(0, 3);
+
+      return [...faceis, ...medias, ...dificeis].map(misturarAlternativas);
     }
 
     function acertou(i) {

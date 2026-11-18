@@ -429,6 +429,16 @@
     }
     .campo input:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 3px rgba(20,20,20,.08); }
     .campo input.invalido { border-color: var(--bad); background: var(--bad-bg); }
+    .campo select {
+      width: 100%; padding: 11px 13px;
+      font: inherit; font-size: 1rem; color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--line-strong); border-radius: 10px;
+      transition: border-color .18s, box-shadow .18s;
+      appearance: none; cursor: pointer;
+    }
+    .campo select:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 3px rgba(20,20,20,.08); }
+    .campo select.invalido { border-color: var(--bad); background: var(--bad-bg); }
     .campo .erro { font-size: .78rem; color: var(--bad); min-height: 1em; }
 
     .modal .btn-dark { width: 100%; margin-top: 20px; padding-block: 14px; }
@@ -615,12 +625,12 @@
   </style>
 </head>
 
-<body class="travado">
+<body>
 
   <!-- =========================================================
        POPUP DE CADASTRO (obrigatório)
        ========================================================= -->
-  <div class="modal-fundo" id="modal-cadastro">
+  <div class="modal-fundo" id="modal-cadastro" hidden>
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
       <span class="eyebrow">Antes de começar</span>
       <h2 id="modal-titulo">Identifique-se</h2>
@@ -640,15 +650,27 @@
             <span class="erro" id="erro-sobrenome"></span>
           </div>
 
-          <div class="campo">
+          <div class="campo inteiro">
             <label for="idade">Idade <span class="obrig">*</span></label>
             <input type="number" id="idade" name="idade" inputmode="numeric" min="1" max="120" required>
             <span class="erro" id="erro-idade"></span>
           </div>
 
-          <div class="campo">
-            <label for="curso">Curso <span class="obrig">*</span></label>
-            <input type="text" id="curso" name="curso" placeholder="Ex.: Direito" required>
+          <div class="campo inteiro">
+            <label for="escolaridade">Escolaridade <span class="obrig">*</span></label>
+            <select id="escolaridade" name="escolaridade">
+              <option value="">Selecione...</option>
+              <option value="Ensino Médio Completo">Ensino Médio Completo</option>
+              <option value="Ensino Médio Cursando/Incompleto">Ensino Médio Cursando/Incompleto</option>
+              <option value="Ensino Superior Cursando">Ensino Superior Cursando</option>
+              <option value="Ensino Superior Completo">Ensino Superior Completo</option>
+            </select>
+            <span class="erro" id="erro-escolaridade"></span>
+          </div>
+
+          <div class="campo inteiro" id="campo-curso" hidden>
+            <label for="curso">Qual curso? <span class="obrig">*</span></label>
+            <input type="text" id="curso" name="curso" placeholder="Ex.: Direito">
             <span class="erro" id="erro-curso"></span>
           </div>
 
@@ -1293,6 +1315,7 @@
     let ranking = [];          // lista já ordenada do ranking
     let ultimoId = null;       // id do último resultado salvo (para destacar)
     let avisoEmailMostrado = false;
+    let queriaIniciar = false;
 
 
     /* =========================================================
@@ -1423,7 +1446,7 @@
     /* =========================================================
        5. POPUP DE CADASTRO
        ========================================================= */
-    const CAMPOS = ["nome", "sobrenome", "idade", "curso", "avatar"];
+    const CAMPOS = ["nome", "sobrenome", "idade", "escolaridade", "avatar"];
 
     function avatarEscolhido() {
       const marcado = document.querySelector('input[name="avatar"]:checked');
@@ -1479,12 +1502,22 @@
         return;
       }
 
+      const escolaridade = $("escolaridade").value;
+      const cursoInput = $("campo-curso").hidden ? "" : $("curso").value.trim();
+      if (!$("campo-curso").hidden && !cursoInput) {
+        $("erro-curso").textContent = "Campo obrigatório.";
+        $("curso").classList.add("invalido");
+        $("curso").focus();
+        return;
+      }
+      const cursoFinal = cursoInput ? `${escolaridade} – ${cursoInput}` : escolaridade;
+
       participante = {
         nome:      $("nome").value.trim(),
         sobrenome: $("sobrenome").value.trim(),
         email:     emailVal,
         idade:     Number($("idade").value),
-        curso:     $("curso").value.trim(),
+        curso:     cursoFinal,
         avatar:    avatarEscolhido()
       };
 
@@ -1495,6 +1528,10 @@
       $("modal-cadastro").hidden = true;
       document.body.classList.remove("travado");
       $("saudacao").textContent = `Olá, ${participante.nome}! Pronto para testar seus conhecimentos?`;
+      if (queriaIniciar) {
+        queriaIniciar = false;
+        iniciar();
+      }
     }
 
     // "Novo participante": limpa tudo e reabre o popup
@@ -1508,6 +1545,10 @@
       $("escolha-avatar").classList.remove("invalido");
       $("aviso-sorteio").hidden = true;
       avisoEmailMostrado = false;
+      queriaIniciar = false;
+      $("campo-curso").hidden = true;
+      $("erro-curso").textContent = "";
+      $("curso").classList.remove("invalido");
 
       // Volta o quiz para a tela inicial
       ordem = [];
@@ -1952,15 +1993,35 @@
         avisoEmailMostrado = false;
       }
     });
+    $("escolaridade").addEventListener("change", () => {
+      const v = $("escolaridade").value;
+      const superior = v === "Ensino Superior Cursando" || v === "Ensino Superior Completo";
+      $("campo-curso").hidden = !superior;
+      if (!superior) {
+        $("curso").value = "";
+        $("erro-curso").textContent = "";
+        $("curso").classList.remove("invalido");
+      }
+      if ($("escolaridade").classList.contains("invalido") && v) {
+        $("escolaridade").classList.remove("invalido");
+        $("erro-escolaridade").textContent = "";
+      }
+    });
     document.querySelectorAll('input[name="avatar"]').forEach(r =>
       r.addEventListener("change", () => validarCampo("avatar"))
     );
     document.addEventListener("keydown", prenderFoco);
-    $("nome").focus();
 
     // Quiz
     document.addEventListener("pointerdown", efeitoRipple);
-    $("btn-iniciar").addEventListener("click", iniciar);
+    $("btn-iniciar").addEventListener("click", () => {
+      if (!participante) {
+        queriaIniciar = true;
+        abrirCadastro();
+      } else {
+        iniciar();
+      }
+    });
     $("btn-proxima").addEventListener("click", proxima);
 
     // Resultado e ranking

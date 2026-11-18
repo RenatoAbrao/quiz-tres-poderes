@@ -433,6 +433,7 @@
 
     .modal .btn-dark { width: 100%; margin-top: 20px; padding-block: 14px; }
     .modal .aviso { margin-top: 12px; text-align: center; font-size: .78rem; color: var(--muted); }
+    .aviso-sorteio { margin-top: 4px; font-size: .8rem; color: var(--exe-fg); background: var(--exe-bg); border-radius: 6px; padding: 7px 10px; }
 
     /* Escolha do avatar */
     .escolha-avatar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
@@ -652,22 +653,25 @@
           </div>
 
           <div class="campo inteiro">
-            <span class="rotulo" id="rotulo-avatar">Escolha seu bonequinho <span class="obrig">*</span></span>
+            <label for="email">E-mail</label>
+            <input type="email" id="email" name="email" autocomplete="email" placeholder="seu@email.com">
+            <span class="aviso-sorteio" id="aviso-sorteio" hidden>Sem e-mail você não participará do sorteio.</span>
+          </div>
+
+          <div class="campo inteiro">
+            <span class="rotulo" id="rotulo-avatar">Escolha seu avatar <span class="obrig">*</span></span>
             <div class="escolha-avatar" id="escolha-avatar" role="radiogroup" aria-labelledby="rotulo-avatar">
               <label class="opcao-avatar">
                 <input type="radio" name="avatar" value="m">
                 <span class="avatar" data-avatar="m"></span>
-                Masculino
               </label>
               <label class="opcao-avatar">
                 <input type="radio" name="avatar" value="f">
                 <span class="avatar" data-avatar="f"></span>
-                Feminino
               </label>
               <label class="opcao-avatar">
                 <input type="radio" name="avatar" value="n">
                 <span class="avatar" data-avatar="n"></span>
-                Prefiro não dizer
               </label>
             </div>
             <span class="erro" id="erro-avatar"></span>
@@ -1288,6 +1292,7 @@
     let inicioQuiz = 0;        // horário em que o quiz começou (ms)
     let ranking = [];          // lista já ordenada do ranking
     let ultimoId = null;       // id do último resultado salvo (para destacar)
+    let avisoEmailMostrado = false;
 
 
     /* =========================================================
@@ -1462,12 +1467,22 @@
           ? document.querySelector('input[name="avatar"]')
           : $(primeiroInvalido);
         alvo.focus();
+        avisoEmailMostrado = false;
+        return;
+      }
+
+      const emailVal = $("email").value.trim();
+      if (!emailVal && !avisoEmailMostrado) {
+        $("aviso-sorteio").hidden = false;
+        avisoEmailMostrado = true;
+        $("email").focus();
         return;
       }
 
       participante = {
         nome:      $("nome").value.trim(),
         sobrenome: $("sobrenome").value.trim(),
+        email:     emailVal,
         idade:     Number($("idade").value),
         curso:     $("curso").value.trim(),
         avatar:    avatarEscolhido()
@@ -1491,6 +1506,8 @@
         if (id !== "avatar") $(id).classList.remove("invalido");
       });
       $("escolha-avatar").classList.remove("invalido");
+      $("aviso-sorteio").hidden = true;
+      avisoEmailMostrado = false;
 
       // Volta o quiz para a tela inicial
       ordem = [];
@@ -1929,6 +1946,12 @@
     ["nome", "sobrenome", "idade", "curso"].forEach(id => $(id).addEventListener("input", () => {
       if ($(id).classList.contains("invalido")) validarCampo(id);
     }));
+    $("email").addEventListener("input", () => {
+      if ($("email").value.trim()) {
+        $("aviso-sorteio").hidden = true;
+        avisoEmailMostrado = false;
+      }
+    });
     document.querySelectorAll('input[name="avatar"]').forEach(r =>
       r.addEventListener("change", () => validarCampo("avatar"))
     );

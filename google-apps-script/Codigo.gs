@@ -36,13 +36,15 @@ const LIMITE_RANKING = 100;   // quantas posições o site mostra
 const CABECALHO = [
   "Data", "ID", "Nome", "Sobrenome", "Sexo", "Idade", "Curso",
   "Pontos", "Acertos", "Total de questões", "Tempo (s)",
-  "Acertos fáceis (de 3)", "Acertos médios (de 4)", "Acertos difíceis (de 3)"
+  "Acertos fáceis (de 3)", "Acertos médios (de 4)", "Acertos difíceis (de 3)",
+  "Origem"
 ];
 
 // Colunas da aba Resultados (posição começando em 0)
 const C = {
   data: 0, id: 1, nome: 2, sobrenome: 3, sexo: 4, idade: 5, curso: 6,
-  pontos: 7, acertos: 8, total: 9, tempo: 10, facil: 11, medio: 12, dificil: 13
+  pontos: 7, acertos: 8, total: 9, tempo: 10, facil: 11, medio: 12, dificil: 13,
+  origem: 14
 };
 
 // Bonequinho escolhido no site → sexo gravado na planilha
@@ -75,7 +77,8 @@ function doPost(e) {
       numero_(d.tempo, 0, 86400),
       acertosDoNivel_(porNivel.facil),
       acertosDoNivel_(porNivel.medio),
-      acertosDoNivel_(porNivel.dificil)
+      acertosDoNivel_(porNivel.dificil),
+      texto_(d.origem, 30)
     ]);
 
     atualizarRankingECsv_();
@@ -123,13 +126,14 @@ function atualizarRankingECsv_() {
   const tabela = [[
     "Posição", "Data", "Nome", "Sobrenome", "Sexo", "Idade", "Curso",
     "Pontos", "Acertos", "Total de questões", "Tempo (s)", "Tempo (min:seg)",
-    "Acertos fáceis (de 3)", "Acertos médios (de 4)", "Acertos difíceis (de 3)"
+    "Acertos fáceis (de 3)", "Acertos médios (de 4)", "Acertos difíceis (de 3)",
+    "Origem"
   ]].concat(linhas.map((r, i) => [
     i + 1,
     Utilities.formatDate(new Date(r[C.data]), fuso, "dd/MM/yyyy HH:mm:ss"),
     r[C.nome], r[C.sobrenome], r[C.sexo], r[C.idade], r[C.curso],
     r[C.pontos], r[C.acertos], r[C.total], r[C.tempo], minSeg_(r[C.tempo]),
-    r[C.facil], r[C.medio], r[C.dificil]
+    r[C.facil], r[C.medio], r[C.dificil], r[C.origem]
   ].map(semFormula_)));
 
   // Aba Ranking

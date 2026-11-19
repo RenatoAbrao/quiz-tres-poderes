@@ -692,6 +692,18 @@
           </div>
 
           <div class="campo inteiro">
+            <label for="origem">Como você conheceu o site? <span class="obrig">*</span></label>
+            <select id="origem" name="origem">
+              <option value="">Selecione...</option>
+              <option value="TikTok">TikTok</option>
+              <option value="Instagram">Instagram</option>
+              <option value="Abordagem presencial">Abordagem presencial</option>
+              <option value="Outros">Outros</option>
+            </select>
+            <span class="erro" id="erro-origem"></span>
+          </div>
+
+          <div class="campo inteiro">
             <span class="rotulo" id="rotulo-avatar">Escolha seu avatar <span class="obrig">*</span></span>
             <div class="escolha-avatar" id="escolha-avatar" role="radiogroup" aria-labelledby="rotulo-avatar">
               <label class="opcao-avatar">
@@ -1520,7 +1532,7 @@
     /* =========================================================
        5. POPUP DE CADASTRO
        ========================================================= */
-    const CAMPOS = ["nome", "sobrenome", "idade", "escolaridade", "avatar"];
+    const CAMPOS = ["nome", "sobrenome", "idade", "escolaridade", "origem", "avatar"];
 
     function avatarEscolhido() {
       const marcado = document.querySelector('input[name="avatar"]:checked');
@@ -1592,6 +1604,7 @@
         email:     emailVal,
         idade:     Number($("idade").value),
         curso:     cursoFinal,
+        origem:    $("origem").value,
         avatar:    avatarEscolhido()
       };
 

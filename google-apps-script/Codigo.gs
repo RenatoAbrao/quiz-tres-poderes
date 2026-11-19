@@ -33,22 +33,25 @@ const NOME_PASTA     = "Quiz Três Poderes - Dados";
 const NOME_CSV       = "resultados.csv";
 const LIMITE_RANKING = 100;   // quantas posições o site mostra
 
+// Colunas novas entram sempre NO FINAL, para não desalinhar linhas já gravadas
 const CABECALHO = [
-  "Data", "ID", "Nome", "Sobrenome", "Sexo", "Idade", "Curso",
+  "Data", "ID", "Nome", "Sobrenome", "Monstrinho", "Idade", "Escolaridade / Curso",
   "Pontos", "Acertos", "Total de questões", "Tempo (s)",
   "Acertos fáceis (de 3)", "Acertos médios (de 4)", "Acertos difíceis (de 3)",
-  "Origem"
+  "Origem", "E-mail"
 ];
 
 // Colunas da aba Resultados (posição começando em 0)
 const C = {
-  data: 0, id: 1, nome: 2, sobrenome: 3, sexo: 4, idade: 5, curso: 6,
+  data: 0, id: 1, nome: 2, sobrenome: 3, monstrinho: 4, idade: 5, curso: 6,
   pontos: 7, acertos: 8, total: 9, tempo: 10, facil: 11, medio: 12, dificil: 13,
-  origem: 14
+  origem: 14, email: 15
 };
 
-// Bonequinho escolhido no site → sexo gravado na planilha
-const SEXOS = { m: "Masculino", f: "Feminino", n: "Não informado" };
+// Monstrinho escolhido no site (código) → nome gravado na planilha
+const MONSTRINHOS = { m: "Azul", f: "Rosa", n: "Amarelo" };
+// Linhas gravadas antes da troca guardavam "sexo"; eram as mesmas três opções
+const VALORES_ANTIGOS = { "Masculino": "m", "Feminino": "f", "Não informado": "n" };
 
 
 /* =========================================================
@@ -68,9 +71,9 @@ function doPost(e) {
       texto_(d.id, 60),
       texto_(d.nome, 40),
       texto_(d.sobrenome, 60),
-      SEXOS[d.avatar] || SEXOS.n,
+      MONSTRINHOS[d.avatar] || MONSTRINHOS.n,
       numero_(d.idade, 1, 120),
-      texto_(d.curso, 60),
+      texto_(d.curso, 100),
       numero_(d.pontos, 0, 1000),
       numero_(d.acertos, 0, 100),
       numero_(d.total, 1, 100),
@@ -78,7 +81,8 @@ function doPost(e) {
       acertosDoNivel_(porNivel.facil),
       acertosDoNivel_(porNivel.medio),
       acertosDoNivel_(porNivel.dificil),
-      texto_(d.origem, 30)
+      texto_(d.origem, 30),
+      texto_(d.email, 120)
     ]);
 
     atualizarRankingECsv_();
@@ -90,7 +94,7 @@ function doPost(e) {
   }
 }
 
-/** Devolve o ranking para o site (sem idade, que não aparece publicamente). */
+/** Devolve o ranking para o site (sem idade, origem e e-mail, que não aparecem publicamente). */
 function doGet() {
   try {
     const ranking = lerResultados_()
@@ -101,7 +105,7 @@ function doGet() {
         nome:      String(r[C.nome]),
         sobrenome: String(r[C.sobrenome]),
         curso:     String(r[C.curso]),
-        avatar:    codigoSexo_(r[C.sexo]),
+        avatar:    codigoMonstrinho_(r[C.monstrinho]),
         pontos:    Number(r[C.pontos])  || 0,
         acertos:   Number(r[C.acertos]) || 0,
         total:     Number(r[C.total])   || 0,
@@ -124,16 +128,16 @@ function atualizarRankingECsv_() {
   const fuso = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
 
   const tabela = [[
-    "Posição", "Data", "Nome", "Sobrenome", "Sexo", "Idade", "Curso",
+    "Posição", "Data", "Nome", "Sobrenome", "Monstrinho", "Idade", "Escolaridade / Curso",
     "Pontos", "Acertos", "Total de questões", "Tempo (s)", "Tempo (min:seg)",
     "Acertos fáceis (de 3)", "Acertos médios (de 4)", "Acertos difíceis (de 3)",
-    "Origem"
+    "Origem", "E-mail"
   ]].concat(linhas.map((r, i) => [
     i + 1,
     Utilities.formatDate(new Date(r[C.data]), fuso, "dd/MM/yyyy HH:mm:ss"),
-    r[C.nome], r[C.sobrenome], r[C.sexo], r[C.idade], r[C.curso],
+    r[C.nome], r[C.sobrenome], MONSTRINHOS[codigoMonstrinho_(r[C.monstrinho])], r[C.idade], r[C.curso],
     r[C.pontos], r[C.acertos], r[C.total], r[C.tempo], minSeg_(r[C.tempo]),
-    r[C.facil], r[C.medio], r[C.dificil], r[C.origem]
+    r[C.facil], r[C.medio], r[C.dificil], r[C.origem], r[C.email]
   ].map(semFormula_)));
 
   // Aba Ranking
@@ -203,7 +207,11 @@ function abaResultados_() {
     aba = planilha.insertSheet(ABA_RESULTADOS);
     aba.appendRow(CABECALHO);
     aba.setFrozenRows(1);
-    aba.getRange(1, 1, 1, CABECALHO.length).setFontWeight("bold");
+  }
+  // Mantém o cabeçalho em dia numa planilha antiga (ex.: "Sexo" → "Monstrinho", + "E-mail")
+  const titulo = aba.getRange(1, 1, 1, CABECALHO.length);
+  if (titulo.getValues()[0].join("|") !== CABECALHO.join("|")) {
+    titulo.setValues([CABECALHO]).setFontWeight("bold");
   }
   return aba;
 }
@@ -240,10 +248,10 @@ function acertosDoNivel_(valor) {
   return isFinite(n) ? n : 0;
 }
 
-// "Feminino" → "f" (o site usa a letra para desenhar o bonequinho)
-function codigoSexo_(sexo) {
-  for (const k in SEXOS) if (SEXOS[k] === sexo) return k;
-  return "n";
+// "Rosa" (ou o valor antigo "Feminino") → "f" (o site usa a letra para desenhar o monstrinho)
+function codigoMonstrinho_(valor) {
+  for (const k in MONSTRINHOS) if (MONSTRINHOS[k] === valor) return k;
+  return VALORES_ANTIGOS[valor] || "n";
 }
 
 function minSeg_(segundos) {

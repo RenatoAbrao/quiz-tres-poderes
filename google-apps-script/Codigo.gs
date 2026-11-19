@@ -280,3 +280,13 @@ function json_(obj) {
     .createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
 }
+
+// Apaga todas as linhas de teste da aba Resultados (mantém o cabeçalho).
+// Rodar manualmente pelo editor do Apps Script, antes da apresentação.
+function limparTeste() {
+  const aba = abaResultados_();
+  const ultima = aba.getLastRow();
+  if (ultima < 2) return;
+  aba.deleteRows(2, ultima - 1);
+  atualizarRankingECsv_();
+}

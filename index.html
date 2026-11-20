@@ -492,6 +492,16 @@
     .avatar.pos-3 { --av-bg: #e6b48c; }  /* 3º lugar: bronze */
     .avatar.pos-n { --av-bg: #dfe8f3; }  /* demais posições  */
 
+    /* Coroa em cima do monstrinho do 1º lugar */
+    .com-coroa { position: relative; display: block; }
+    .coroa {
+      position: absolute; left: 50%; top: -16px; z-index: 1;
+      width: 30px; height: 21px;
+      transform: translateX(-50%) rotate(-8deg);
+      filter: drop-shadow(0 1px 1px rgba(0,0,0,.18));
+      pointer-events: none;
+    }
+
     /* =========================================================
        13. RANKING
        ========================================================= */
@@ -611,6 +621,7 @@
       .ranking-topo .btn { width: 100%; }
       .item-ranking { grid-template-columns: 28px 40px 1fr auto; gap: 10px; padding: 10px; }
       .item-ranking .avatar { width: 40px; height: 40px; }
+      .coroa { width: 25px; height: 17px; top: -13px; }
       .item-ranking .pos { font-size: 1.05rem; }
 
       /* Rodapé */
@@ -1516,9 +1527,19 @@
       return pos <= 3 ? "pos-" + pos : "pos-n";
     }
 
-    // Devolve o HTML de um bonequinho (usado na lista do ranking)
+    // Coroa dourada que fica em cima do monstrinho do 1º lugar
+    const COROA = `<svg class="coroa" viewBox="0 0 26 18" aria-label="Coroa do 1º lugar" role="img">
+      <path d="M2 6 L7.5 10 L13 2 L18.5 10 L24 6 L22 16 H4 Z" fill="#f2c230" stroke="#8a6410" stroke-width="1.4" stroke-linejoin="round"/>
+      <circle cx="2" cy="6" r="1.8" fill="#f2c230" stroke="#8a6410" stroke-width="1.1"/>
+      <circle cx="13" cy="2" r="1.8" fill="#f2c230" stroke="#8a6410" stroke-width="1.1"/>
+      <circle cx="24" cy="6" r="1.8" fill="#f2c230" stroke="#8a6410" stroke-width="1.1"/>
+      <circle cx="13" cy="12" r="1.6" fill="#e2483d"/>
+    </svg>`;
+
+    // Devolve o HTML de um monstrinho (usado na lista do ranking); o 1º lugar ganha coroa
     function avatarHTML(tipo, pos) {
-      return `<span class="avatar ${classePosicao(pos)}">${AVATARES[chaveBoneco(tipo)]}</span>`;
+      const avatar = `<span class="avatar ${classePosicao(pos)}">${AVATARES[chaveBoneco(tipo)]}</span>`;
+      return pos === 1 ? `<span class="com-coroa">${COROA}${avatar}</span>` : avatar;
     }
 
     // Pinta um bonequinho que já existe na página (usado no resultado)

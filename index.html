@@ -175,6 +175,7 @@
       position: relative; overflow: hidden;
       min-height: 300px; min-width: 0;
       display: grid; place-items: end center;
+      padding-bottom: 40px;   /* espaço para a legenda embaixo do desenho */
       background: linear-gradient(180deg, #eef3f8 0%, var(--cream) 100%);
       border-left: 1px solid var(--line);
     }
@@ -555,7 +556,7 @@
       .hero .lead { font-size: 1rem; }
       .hero .acoes { display: grid; grid-template-columns: 1fr; gap: 8px; }
       .hero .acoes .btn { width: 100%; padding-block: 14px; }
-      .hero-arte { min-height: 170px; }
+      .hero-arte { min-height: 170px; padding-bottom: 30px; }
       .sol { width: 80px; height: 80px; top: 16px; right: 24px; }
       .hero-arte .legenda { left: 14px; bottom: 8px; font-size: .7rem; }
 
@@ -768,15 +769,13 @@
       </div>
       <div class="hero-arte">
         <div class="sol"></div>
-        <svg class="congresso" viewBox="0 0 440 230" role="img" aria-label="Desenho do Congresso Nacional">
+        <svg class="congresso" viewBox="0 0 440 200" role="img" aria-label="Desenho do Congresso Nacional">
           <rect class="massa" x="200" y="18" width="16" height="178" rx="1"/>
           <rect class="massa" x="224" y="18" width="16" height="178" rx="1"/>
           <rect class="massa" x="200" y="84" width="40" height="8"/>
           <path class="traco" d="M70 196 A58 46 0 0 1 186 196"/>
           <path class="traco" d="M254 158 L398 158 Q386 196 326 198 Q266 196 254 158 Z"/>
           <path class="traco" d="M20 196 H420"/>
-          <path class="traco" d="M40 206 H400" opacity=".35"/>
-          <path class="traco" d="M70 216 H370" opacity=".2"/>
         </svg>
         <span class="legenda">Congresso Nacional · Oscar Niemeyer, 1960</span>
       </div>

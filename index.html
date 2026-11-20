@@ -492,7 +492,7 @@
     .avatar.pos-3 { --av-bg: #e6b48c; }  /* 3º lugar: bronze */
     .avatar.pos-n { --av-bg: #dfe8f3; }  /* demais posições  */
 
-    /* Coroa em cima do monstrinho do 1º lugar */
+    /* Coroa em cima do monstrinho do 1º, 2º e 3º lugar (ouro, prata e bronze) */
     .com-coroa { position: relative; display: block; }
     .coroa {
       position: absolute; left: 50%; top: -16px; z-index: 1;
@@ -501,6 +501,7 @@
       filter: drop-shadow(0 1px 1px rgba(0,0,0,.18));
       pointer-events: none;
     }
+    .coroa.menor { width: 25px; height: 17px; top: -13px; }  /* 2º e 3º: um pouco menores */
 
     /* =========================================================
        13. RANKING
@@ -622,6 +623,7 @@
       .item-ranking { grid-template-columns: 28px 40px 1fr auto; gap: 10px; padding: 10px; }
       .item-ranking .avatar { width: 40px; height: 40px; }
       .coroa { width: 25px; height: 17px; top: -13px; }
+      .coroa.menor { width: 21px; height: 15px; top: -11px; }
       .item-ranking .pos { font-size: 1.05rem; }
 
       /* Rodapé */
@@ -1527,19 +1529,27 @@
       return pos <= 3 ? "pos-" + pos : "pos-n";
     }
 
-    // Coroa dourada que fica em cima do monstrinho do 1º lugar
-    const COROA = `<svg class="coroa" viewBox="0 0 26 18" aria-label="Coroa do 1º lugar" role="img">
-      <path d="M2 6 L7.5 10 L13 2 L18.5 10 L24 6 L22 16 H4 Z" fill="#f2c230" stroke="#8a6410" stroke-width="1.4" stroke-linejoin="round"/>
-      <circle cx="2" cy="6" r="1.8" fill="#f2c230" stroke="#8a6410" stroke-width="1.1"/>
-      <circle cx="13" cy="2" r="1.8" fill="#f2c230" stroke="#8a6410" stroke-width="1.1"/>
-      <circle cx="24" cy="6" r="1.8" fill="#f2c230" stroke="#8a6410" stroke-width="1.1"/>
-      <circle cx="13" cy="12" r="1.6" fill="#e2483d"/>
-    </svg>`;
+    // Coroas do pódio: cor da coroa, cor do contorno e cor da pedrinha
+    const CORES_COROA = {
+      1: { cor: "#f2c230", contorno: "#8a6410", pedra: "#e2483d" },  // ouro
+      2: { cor: "#d4dbe3", contorno: "#5f6b78", pedra: "#3d7fe2" },  // prata
+      3: { cor: "#d99a62", contorno: "#7a4a22", pedra: "#3aa56b" }   // bronze
+    };
 
-    // Devolve o HTML de um monstrinho (usado na lista do ranking); o 1º lugar ganha coroa
+    function coroaHTML(pos) {
+      const c = CORES_COROA[pos];
+      const ponta = (x, y) => `<circle cx="${x}" cy="${y}" r="1.8" fill="${c.cor}" stroke="${c.contorno}" stroke-width="1.1"/>`;
+      return `<svg class="coroa${pos > 1 ? " menor" : ""}" viewBox="0 0 26 18" aria-label="Coroa do ${pos}º lugar" role="img">
+        <path d="M2 6 L7.5 10 L13 2 L18.5 10 L24 6 L22 16 H4 Z" fill="${c.cor}" stroke="${c.contorno}" stroke-width="1.4" stroke-linejoin="round"/>
+        ${ponta(2, 6)}${ponta(13, 2)}${ponta(24, 6)}
+        <circle cx="13" cy="12" r="1.6" fill="${c.pedra}"/>
+      </svg>`;
+    }
+
+    // Devolve o HTML de um monstrinho (usado na lista do ranking); o pódio (1º, 2º e 3º) ganha coroa
     function avatarHTML(tipo, pos) {
       const avatar = `<span class="avatar ${classePosicao(pos)}">${AVATARES[chaveBoneco(tipo)]}</span>`;
-      return pos === 1 ? `<span class="com-coroa">${COROA}${avatar}</span>` : avatar;
+      return CORES_COROA[pos] ? `<span class="com-coroa">${coroaHTML(pos)}${avatar}</span>` : avatar;
     }
 
     // Pinta um bonequinho que já existe na página (usado no resultado)
